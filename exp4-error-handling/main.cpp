@@ -9,19 +9,15 @@
 // #define STAGE_GRAMMAR_ANALYSIS
 #define STAGE_ERROR_HANDLING
 
-std::ifstream input("../testfile.txt");  // TODO: 修改路径 ../
-std::ofstream normalOutput("../output.txt");  // TODO: 修改路径 ../
-std::ofstream errorOutput("../error.txt");  // TODO: 修改路径 ../
+std::ifstream input("testfile.txt");  // TODO: 修改路径 ../
+std::ofstream normalOutput("output.txt");  // TODO: 修改路径 ../
+std::ofstream errorOutput("error.txt");  // TODO: 修改路径 ../
 std::map<int, std::string> errorLog;
 
-static bool cmp(const std::pair<int, std::string>& a, const std::pair<int ,std::string> &b) {
-    return a.first < b.first;
-}
-
-void outputAll(Node *cur) {
+void grammarItemOutput(Node *cur) {
     if (!cur->isLeaf) {
         for (auto node: *(cur->getAllChildren())) {
-            outputAll(node);
+            grammarItemOutput(node);
         }
     }
     if (cur->needOutput()) {
@@ -35,16 +31,21 @@ int main() {
     if (!normalOutput.is_open())
         throw FileIOError("ERROR IN OPENING FILE 'printAll.txt'");
 
-    Lexer lexer;
-    std::vector<Token *> &tokens = lexer.parse();
-    Parser parser(tokens);
-    Node *root = parser.parse();
+    auto *lexer = new Lexer();
+    std::vector<Token *> &tokens = lexer->parse();
+
+    auto *parser = new Parser(tokens);
+    Node *root = parser->parse();
+
+    delete lexer;
+    delete parser;
+
 #ifdef STAGE_GRAMMAR_ANALYSIS
-    outputAll(root);
+    grammarItemOutput(root);
     normalOutput << std::flush;
 #endif
-    ErrorHandler errorHandler(root);
-    errorHandler.check();
+    auto *errorHandler = new ErrorHandler(root);
+    errorHandler->check();
 #ifdef STAGE_ERROR_HANDLING
     auto it = errorLog.begin();
     while (it != errorLog.end()) {
@@ -56,6 +57,8 @@ int main() {
     input.close();
     normalOutput.close();
     errorOutput.close();
+
+    delete errorHandler;
 
     return 0;
 }
