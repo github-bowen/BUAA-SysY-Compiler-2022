@@ -1,0 +1,17 @@
+// #include <stdio.h>
+int main() {
+    const int a = 10, b = 3, c[1] = {0}, d[2] = {1, 2}, e[2][2] = {{1, 2}, {3, 4}};
+    int f = 30;
+    printf("20231198\n");
+    printf("%d\n", a);
+    printf("%d\n", a + f);
+    printf("%d\n", a * f);
+    printf("%d\n", a / f);
+    printf("%d\n", +-+10);
+    printf("%d\n", a % f);
+    printf("%d\n", 1);
+    printf("1\n");
+    printf("1\n");
+
+    return 0;
+}

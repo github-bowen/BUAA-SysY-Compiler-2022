@@ -1,0 +1,124 @@
+// #include <stdio.h>
+int a = 1000000;
+int b;
+const int aa = 10;
+const int constArray[2] = {1, 2};
+int fib(int n) {
+    if (n == 0 || n == 1) {
+        return 1;
+    }
+    else {
+        return fib(n - 1) + fib(n - 2);
+    }
+    return aa;
+}
+
+/*
+int getint() {
+    int n;
+    // FILE* f = fopen("input1.txt", "r");
+    // fscanf(f, "%d", &n);
+    return 999;
+}
+*/
+
+void foo() {
+    const int aa = 10;
+}
+void foo1(int par1) {
+    return;
+}
+
+void foo11(int par1) {
+    return;
+}
+
+void foo2(int par2[], int par3[][2]) {
+    return;
+}
+
+void foo3(int par2[], int a, int b) {
+
+}
+
+int func(int a[]) {
+    return 0;
+}
+
+int main() {
+    int a = 10, b = -4, c = 7345, d, e, f[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    int g[20 / 2] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, h[7 * 2][9], k[3][2] = {{1, 2}, {2, 1}, {0, 1}};
+    const int ca[2] = {1, 2}, caa[2][2] = {{1, 1}, {1, 1}};
+    const int c1 = 1, c2 = 2, c3 = 3;
+    const int c4 = 4, c5 = 5;
+    int n1;
+    int n2 = 1, n3;
+    int n4 = 4, n5 = 5;
+    d = 11;
+    e = -11;
+    h[0][0] = 0;
+    printf("20231198\n");
+    /* 基本表达式 PrimaryExp → '(' Exp ')' | LVal | Number // 三种情况均需覆盖
+     * 一元表达式 UnaryExp → PrimaryExp | Ident '(' [FuncRParams] ')' // 3种情况均需覆盖, 函数调用也需要覆盖
+     * FuncRParams的不同情况 | UnaryOp UnaryExp // 存在即可
+     * 单目运算符 UnaryOp → '+' | '&#8722;' | '!' 注：'!'仅出现在条件表达式中 // 三种均需覆盖
+     * 函数实参表 FuncRParams → Exp { ',' Exp } // 1.花括号内重复0次 2.花括号内重复多次 3. Exp需要覆盖数组传参和部分数组传参
+     * 乘除模表达式 MulExp → UnaryExp | MulExp ('*' | '/' | '%') UnaryExp // 1.UnaryExp 2.* 3./ 4.% 均需覆盖
+     * 加减表达式 AddExp → MulExp | AddExp ('+' | '&#8722;') MulExp // 1.MulExp 2.+ 需覆盖 3.- 需覆盖
+     * 关系表达式 RelExp → AddExp | RelExp ('<' | '>' | '<=' | '>=') AddExp // 1.AddExp 2.< 3.> 4.<= 5.>= 均需覆盖
+     * 相等性表达式 EqExp → RelExp | EqExp ('==' | '!=') RelExp // 1.RelExp 2.== 3.!= 均 需覆盖
+     * 逻辑与表达式 LAndExp → EqExp | LAndExp '&&' EqExp // 1.EqExp 2.&& 均需覆盖
+     * 逻辑或表达式 LOrExp → LAndExp | LOrExp '||' LAndExp // 1.LAndExp 2.|| 均需覆盖
+     */
+    if (a && b || c && d) {
+        foo();
+    }
+    func(caa[1]);
+    foo1(a);
+    foo2(f, k);
+    foo3((k[0]), 1, 1);
+    printf("1%d%d\n", a, b);
+    if (d && e || e && f[0]) {;}
+    else {
+        e = f[0];
+    }
+    e = e + 1;
+    printf("e: %d\n", e);
+    printf("\n");
+    if (fib(1) && fib(fib(fib(fib(1))))) {
+        printf("%d\n", fib(fib(2)));
+    }
+    printf("\n");
+    // printf("%d\n", (a >= b && a * b > 0 || c % 10 == 5 && c / 10 % 10 == 5) && +-+-+-+-1 > f[0]);
+    // printf("%d\n", ((a + b - c)) * 2 / 10 % 3 >= 3 || 3 <= c && 0 < a && a != c);
+    if (!0) {
+        printf("9\n");
+    }
+    int i = 0;
+    while (i < 10) {
+        if (i != 8) {
+            i = i + 2;
+        } else {
+            break;
+        }
+    }
+    while (i > 0) {
+        if (i < 0) {
+            continue;
+        } else {
+            i  = i - 1;
+        }
+    }
+    if (a > b && a >= 1 || b < 1 && b <= 1 || a == b) {
+        ;
+    } else if (1) {
+        printf("1");
+    }
+    int getInteger;
+    getInteger = getint();
+    printf("%d\n", getInteger);
+    printf("10\n");
+    printf("1\n");
+    printf("1\n");
+    return 0;
+}
