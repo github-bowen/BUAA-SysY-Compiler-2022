@@ -125,5 +125,12 @@ Node::Node() {
     isErrorNode = true;
 }
 
+Node::~Node() {
+    if (isLeaf) delete token;
+    for (const auto child : children) {
+        delete child;
+    }
+}
+
 
 

@@ -6,7 +6,7 @@
 #include "exceptions/FileIOError.h"
 #include "ErrorHandler.h"
 
-// #define STAGE_GRAMMAR_ANALYSIS
+//#define STAGE_GRAMMAR_ANALYSIS
 #define STAGE_ERROR_HANDLING
 
 std::ifstream input("testfile.txt");  // TODO: 修改路径 ../
@@ -59,6 +59,7 @@ int main() {
     errorOutput.close();
 
     delete errorHandler;
+    delete root;
 
     return 0;
 }

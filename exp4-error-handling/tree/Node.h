@@ -18,6 +18,8 @@ protected:
     Token *token;  // for leaf nodes
 
 public:
+    ~Node();
+
     bool isToken() const;
 
     bool isGrammarItem() const;
