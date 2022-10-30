@@ -32,10 +32,12 @@ int main() {
     if (!normalOutput.is_open())
         throw FileIOError("ERROR IN OPENING FILE 'printAll.txt'");
 
-    auto *lexer = new Lexer();  // 词法分析器
+    // lexical analyzer 词法分析器
+    auto *lexer = new Lexer();
     std::vector<Token *> &tokens = lexer->parse();
 
-    auto *parser = new Parser(tokens);  // 语法分析器
+    // 语法分析器
+    auto *parser = new Parser(tokens);
     Node *root = parser->parse();
 
     delete lexer;
@@ -46,7 +48,8 @@ int main() {
     normalOutput << std::flush;
 #endif
 
-    auto *errorHandler = new ErrorHandler(root);  // 错误处理器
+    // error handler 错误处理器
+    auto *errorHandler = new ErrorHandler(root);
     errorHandler->check();
 
 #ifdef STAGE_ERROR_HANDLING
@@ -58,7 +61,8 @@ int main() {
     errorOutput << std::flush;
 #endif
 
-    auto *icTranslator = new ICTranslator(root, errorHandler->rootTable);  // 中间代码生成器
+    // intermediate code translator 中间代码生成器
+    auto *icTranslator = new ICTranslator(root, errorHandler->rootTable);
     icTranslator->translate();
 
     input.close();
