@@ -5,13 +5,14 @@
 #include "tree/Node.h"
 #include "exceptions/FileIOError.h"
 #include "ErrorHandler.h"
+#include "ICTranslator.h"
 
 //#define STAGE_GRAMMAR_ANALYSIS
 #define STAGE_ERROR_HANDLING
 
-std::ifstream input("testfile.txt");  // TODO: 修改路径 ../
-std::ofstream normalOutput("output.txt");  // TODO: 修改路径 ../
-std::ofstream errorOutput("error.txt");  // TODO: 修改路径 ../
+std::ifstream input("../testfile.txt");  // TODO: 修改路径 ../
+std::ofstream normalOutput("../output.txt");  // TODO: 修改路径 ../
+std::ofstream errorOutput("../error.txt");  // TODO: 修改路径 ../
 std::map<int, std::string> errorLog;
 
 void grammarItemOutput(Node *cur) {
@@ -31,10 +32,10 @@ int main() {
     if (!normalOutput.is_open())
         throw FileIOError("ERROR IN OPENING FILE 'printAll.txt'");
 
-    auto *lexer = new Lexer();
+    auto *lexer = new Lexer();  // 词法分析器
     std::vector<Token *> &tokens = lexer->parse();
 
-    auto *parser = new Parser(tokens);
+    auto *parser = new Parser(tokens);  // 语法分析器
     Node *root = parser->parse();
 
     delete lexer;
@@ -44,8 +45,10 @@ int main() {
     grammarItemOutput(root);
     normalOutput << std::flush;
 #endif
-    auto *errorHandler = new ErrorHandler(root);
+
+    auto *errorHandler = new ErrorHandler(root);  // 错误处理器
     errorHandler->check();
+
 #ifdef STAGE_ERROR_HANDLING
     auto it = errorLog.begin();
     while (it != errorLog.end()) {
@@ -54,6 +57,10 @@ int main() {
     }
     errorOutput << std::flush;
 #endif
+
+    auto *icTranslator = new ICTranslator(root, errorHandler->rootTable);  // 中间代码生成器
+    icTranslator->translate();
+
     input.close();
     normalOutput.close();
     errorOutput.close();

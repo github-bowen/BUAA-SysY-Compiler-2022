@@ -7,8 +7,9 @@
 
 class ErrorHandler {
     Node *root;
-    SymbolTable *currentTable;
 public:
+    SymbolTable *currentTable;
+    SymbolTable *rootTable;
     explicit ErrorHandler(Node *);
 
     void check();

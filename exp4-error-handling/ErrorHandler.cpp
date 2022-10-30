@@ -23,7 +23,8 @@ static bool receiveReturn = false;
 static int funcEndLineNum = 0;   // 结尾分号的行号
 
 ErrorHandler::ErrorHandler(Node *root) : root(root) {
-    this->currentTable = new SymbolTable(nullptr, true);
+    this->rootTable = new SymbolTable(nullptr, true);
+    this->currentTable = this->rootTable;
 }
 
 void ErrorHandler::check() {

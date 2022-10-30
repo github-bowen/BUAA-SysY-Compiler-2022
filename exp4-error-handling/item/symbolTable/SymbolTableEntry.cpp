@@ -122,8 +122,7 @@ int SymbolTableEntry::array2get(int i1, int i2) const {
 //        return ((array2->values))[i1][i2];
     }
     assert(type == SymbolTableEntryType::Array2Const);
-    return 0;
-//    return ((array2Const->values))[i1][i2];
+    return ((array2Const->values))[i1][i2];
 }
 
 bool SymbolTableEntry::hasSameType(SymbolTableEntry *realParam, FuncParam *funcParam) {
@@ -177,6 +176,7 @@ int SymbolTableEntry::getD2ForArray2() {
     if (this->type == SymbolTableEntryType::Array2) {
         return array2->d2;
     }
+    assert(type == SymbolTableEntryType::Array2Const);
     return array2Const->d2;
 }
 
