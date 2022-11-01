@@ -193,3 +193,27 @@ SymbolTableEntryType SymbolTableEntry::getActualType() const {
     }
     return type;
 }
+
+int *SymbolTableEntry::array1ConstGetAll() const {
+    assert(type == SymbolTableEntryType::Array1Const);
+    return array1Const->values;
+}
+
+int **SymbolTableEntry::array2ConstGetAll() const {
+    assert(type == SymbolTableEntryType::Array2Const);
+    return array2Const->values;
+}
+
+SymbolTableEntry::~SymbolTableEntry() {
+    delete node;
+    delete var;
+    delete varConst;
+    delete array1;
+    delete array1Const;
+    delete array2;
+    delete array2Const;
+    delete functionOfInt;
+    delete functionOfVoid;
+    delete tempEntry;
+    delete definedEntry;
+}

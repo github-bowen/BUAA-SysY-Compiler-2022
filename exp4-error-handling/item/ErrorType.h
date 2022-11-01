@@ -10,7 +10,7 @@ enum class ErrorType {
     IdentRedefined,  // 函数名或者变量名在当前作用域下重复定义 b
     IdentUndefined,  // 标识符未定义 c
 
-    ParamNumNotMatch,  // 函数参数个数不匹配 d
+    ParamNumNotMatch,  // 函数参数个数不匹配 length
     ParamTypeNotMatch,  // 函数参数类型不匹配 e
 
     ReturnRedundant,  // 无返回值的函数存在不匹配的 return 语句 (注：可以为 "return;" ) f
@@ -29,7 +29,7 @@ const std::map<ErrorType, std::string> errorType2string = {
         {ErrorType::IllegalChar,          "a"},
         {ErrorType::IdentRedefined,       "b"},
         {ErrorType::IdentUndefined,       "c"},
-        {ErrorType::ParamNumNotMatch,     "d"},
+        {ErrorType::ParamNumNotMatch,     "length"},
         {ErrorType::ParamTypeNotMatch,    "e"},
         {ErrorType::ReturnRedundant,      "f"},
         {ErrorType::ReturnMissing,        "g"},

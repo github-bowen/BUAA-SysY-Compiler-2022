@@ -6,9 +6,9 @@
 class Array1Const {
 public:
     const int d;  // 维度
-    const int *values;
+    int *values;
 
-    explicit Array1Const(int d, const int *values)
+    explicit Array1Const(int d, int *values)
             : d(d), values(values) {}
 
     ~Array1Const() {

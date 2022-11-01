@@ -2,7 +2,13 @@
 #define IC_ENTRY_TYPE_H
 
 enum class ICEntryType {
+    // 第一次代码生成作业:
     VarDefine,
+    ConstVarDefine,
+
+    ArrayDefine,
+    ConstArrayDefine,
+
     FuncDefine,
     FuncCall,
 
@@ -14,7 +20,8 @@ enum class ICEntryType {
     Sub,
     Mul,
     Div,
-    Mod
+    Mod,
+    // 第二次代码生成作业:
 };
 
 #endif //IC_ENTRY_TYPE_H

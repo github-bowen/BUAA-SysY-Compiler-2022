@@ -26,7 +26,7 @@ void func2() {
 int main() {
 	int a,b;
 	a = getint()     // 28
-	printf("%d",a)     // 29
+	printf("%length",a)     // 29
 	while(a == 1) {
 		a = b + 1;
 		break     // 32

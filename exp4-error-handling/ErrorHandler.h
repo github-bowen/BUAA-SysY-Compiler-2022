@@ -4,22 +4,18 @@
 #include "tree/Node.h"
 #include "item/symbolTable/SymbolTable.h"
 #include "item/symbolTable/ConstValue.h"
-
-#include "item/ic/ICItemType.h"
-#include "item/ic/ICItem.h"
-#include "item/ic/ICItemArray.h"
-#include "item/ic/ICItemConstNum.h"
-#include "item/ic/ICItemLabel.h"
-#include "item/ic/ICItemString.h"
-#include "item/ic/ICItemVar.h"
+#include "ICTranslator.h"
 
 class ErrorHandler {
     Node *root;
 public:
     SymbolTable *currentTable;
     SymbolTable *rootTable;
+    ICTranslator *icTranslator;
 
     explicit ErrorHandler(Node *);
+
+    bool isGlobal() const;
 
     void check();
 
@@ -39,7 +35,7 @@ public:
 
     int check_ConstExp(Node *node);
 
-    void check_InitVal(Node *node);
+    void check_InitVal(Node *node, int d, ICItem * icItem);
 
     ConstValue *check_ConstInitVal(Node *node, int d);
 
@@ -51,7 +47,7 @@ public:
 
     SymbolTableEntry *check_PrimaryExp(Node *node, bool fromConstExp, int *constExpValue);
 
-    SymbolTableEntry *check_Exp(Node *node, bool fromConstExp, int *constExpValue);
+    SymbolTableEntry *check_Exp(Node *node, bool fromConstExp, int *constExpValue, ICItem *icItem);
 
     SymbolTableEntry *check_LVal(Node *node, bool fromConstExp, int *constExpValue);
 

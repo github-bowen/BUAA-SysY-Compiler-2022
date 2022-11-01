@@ -28,6 +28,8 @@ private:
 public:
     explicit SymbolTableEntry(int value);
 
+    ~SymbolTableEntry();
+
     SymbolTableEntry(SymbolTableEntry *defineEntry, SymbolTableEntryType actualType, int d1);
 
     SymbolTableEntry(SymbolTableEntry *defineEntry, SymbolTableEntryType actualType);
@@ -87,6 +89,10 @@ public:
     int getValueFromReferencedArray1(int d1) const;
 
     int array1get(int index) const;
+
+    int *array1ConstGetAll() const;
+
+    int **array2ConstGetAll() const;
 
     int array2get(int i1, int i2) const;
 
