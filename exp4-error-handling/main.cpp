@@ -61,9 +61,9 @@ int main() {
     errorOutput << std::flush;
 #endif
 
-    // intermediate code translator 中间代码生成器
-    auto *icTranslator = new ICTranslator(root, errorHandler->rootTable);
-    icTranslator->translate();
+//    // intermediate code translator 中间代码生成器
+//    auto *icTranslator = new ICTranslator(root, errorHandler->rootTable);
+//    icTranslator->translate();
 
     input.close();
     normalOutput.close();

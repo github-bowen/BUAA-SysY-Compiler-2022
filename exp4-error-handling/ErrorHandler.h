@@ -5,11 +5,20 @@
 #include "item/symbolTable/SymbolTable.h"
 #include "item/symbolTable/ConstValue.h"
 
+#include "item/ic/ICItemType.h"
+#include "item/ic/ICItem.h"
+#include "item/ic/ICItemArray.h"
+#include "item/ic/ICItemConstNum.h"
+#include "item/ic/ICItemLabel.h"
+#include "item/ic/ICItemString.h"
+#include "item/ic/ICItemVar.h"
+
 class ErrorHandler {
     Node *root;
 public:
     SymbolTable *currentTable;
     SymbolTable *rootTable;
+
     explicit ErrorHandler(Node *);
 
     void check();
@@ -50,6 +59,7 @@ public:
 
     std::vector<SymbolTableEntry *> *check_FuncRParams(Node *node,
                                                        SymbolTableEntry *entry);
+
     void check_FuncFParams(Node *funcFParams,
                            SymbolTableEntry *funcIdentEntry);
 
