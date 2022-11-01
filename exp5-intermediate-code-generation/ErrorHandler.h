@@ -4,12 +4,18 @@
 #include "tree/Node.h"
 #include "item/symbolTable/SymbolTable.h"
 #include "item/symbolTable/ConstValue.h"
+#include "ICTranslator.h"
 
 class ErrorHandler {
     Node *root;
-    SymbolTable *currentTable;
 public:
+    SymbolTable *currentTable;
+    SymbolTable *rootTable;
+    ICTranslator *icTranslator;
+
     explicit ErrorHandler(Node *);
+
+    bool isGlobal() const;
 
     void check();
 
@@ -29,7 +35,7 @@ public:
 
     int check_ConstExp(Node *node);
 
-    void check_InitVal(Node *node);
+    void check_InitVal(Node *node, int d, ICItem * icItem);
 
     ConstValue *check_ConstInitVal(Node *node, int d);
 
@@ -41,7 +47,7 @@ public:
 
     SymbolTableEntry *check_PrimaryExp(Node *node, bool fromConstExp, int *constExpValue);
 
-    SymbolTableEntry *check_Exp(Node *node, bool fromConstExp, int *constExpValue);
+    SymbolTableEntry *check_Exp(Node *node, bool fromConstExp, int *constExpValue, ICItem *icItem);
 
     SymbolTableEntry *check_LVal(Node *node, bool fromConstExp, int *constExpValue);
 
@@ -49,6 +55,7 @@ public:
 
     std::vector<SymbolTableEntry *> *check_FuncRParams(Node *node,
                                                        SymbolTableEntry *entry);
+
     void check_FuncFParams(Node *funcFParams,
                            SymbolTableEntry *funcIdentEntry);
 

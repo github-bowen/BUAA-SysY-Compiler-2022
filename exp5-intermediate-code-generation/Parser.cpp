@@ -699,7 +699,7 @@ Node *Parser::parse_Stmt(int depth) {
 }
 
 /*
- * <FormatChar> → %d
+ * <FormatChar> → %length
  * <NormalChar> → 十进制编码为32,33,40-126的ASCII字符，'\'（编码92）出现当且仅当为'\n'
  * <Char> → <FormatChar> | <NormalChar>
  * <FormatString> → '"'{<Char>}'"'

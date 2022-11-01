@@ -122,7 +122,6 @@ int SymbolTableEntry::array2get(int i1, int i2) const {
 //        return ((array2->values))[i1][i2];
     }
     assert(type == SymbolTableEntryType::Array2Const);
-//    return 0;
     return ((array2Const->values))[i1][i2];
 }
 
@@ -193,4 +192,28 @@ SymbolTableEntryType SymbolTableEntry::getActualType() const {
         return tempEntry->actualType;
     }
     return type;
+}
+
+int *SymbolTableEntry::array1ConstGetAll() const {
+    assert(type == SymbolTableEntryType::Array1Const);
+    return array1Const->values;
+}
+
+int **SymbolTableEntry::array2ConstGetAll() const {
+    assert(type == SymbolTableEntryType::Array2Const);
+    return array2Const->values;
+}
+
+SymbolTableEntry::~SymbolTableEntry() {
+    delete node;
+    delete var;
+    delete varConst;
+    delete array1;
+    delete array1Const;
+    delete array2;
+    delete array2Const;
+    delete functionOfInt;
+    delete functionOfVoid;
+    delete tempEntry;
+    delete definedEntry;
 }
