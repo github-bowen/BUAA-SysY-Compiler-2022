@@ -6,7 +6,10 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <cstring>
 #include "_debug.h"
+
+#define IS_GLOBAL ((currentTable->isRoot))
 
 extern std::map<int, std::string> errorLog;
 
@@ -26,10 +29,6 @@ ErrorHandler::ErrorHandler(Node *root) : root(root) {
     this->rootTable = new SymbolTable(nullptr, true);
     this->currentTable = this->rootTable;
     this->icTranslator = ICTranslator::getInstance();
-}
-
-bool ErrorHandler::isGlobal() const {
-    return currentTable->isRoot;
 }
 
 
@@ -150,7 +149,9 @@ void ErrorHandler::check_MainFuncDef(Node *node) {
 // VarDef → Ident { '[' ConstExp ']' } '=' InitVal  FIXME: k => ErrorType::MissingRBRACK ]
 void ErrorHandler::check_VarDef(Node *node) {
     Node *ident = node->getFirstChild();
+    bool hasError = false;
     if (currentTable->nameExistedInCurrentTable(ident)) {
+        hasError = true;
         errorLog.insert({ident->getToken()->lineNumber,
                          errorType2string.find(ErrorType::IdentRedefined)->second});
     } else {
@@ -160,6 +161,7 @@ void ErrorHandler::check_VarDef(Node *node) {
             arrayDimensions.push_back(this->check_ConstExp(node->getChildAt(i + 1)));
             auto errorNode = dynamic_cast<ErrorNode *>(node->getChildAt(i + 2));
             if (errorNode != nullptr) {
+                hasError = true;
                 errorLog.insert({errorNode->lineNum, errorNode->error()});
             }
             i += 3;
@@ -167,32 +169,52 @@ void ErrorHandler::check_VarDef(Node *node) {
         int d = arrayDimensions.size();
         ICItem *icItem;
         if (d == 0) {
-            if (isGlobal()) icItem = new ICItemImm();  // 全局变量初始化，要求出初始值
+            if (IS_GLOBAL) icItem = new ICItemImm();  // 全局变量初始化，要求出初始值
             else icItem = new ICItemVar(false);
         } else {  // 一维数组或二维数组
-            icItem = new ICItemArray(isGlobal());
+            icItem = new ICItemArray(IS_GLOBAL);
         }
+        bool hasInitVal = false;
         if (node->getLastChild()->is(GrammarItem::InitVal)) {
-            this->check_InitVal(node->getLastChild(), d, icItem) // TODO: 没写完
+            hasInitVal = true;
+            this->check_InitVal(node->getLastChild(), d, icItem);
         }
-        // SymbolTableEntry(Node *node, SymbolTableEntryType type, unsigned int defLineNum);
+        if (hasError) return;
+        if (IS_GLOBAL && (!hasInitVal)) {
+            // 全局变量但没有显示初始化，自动初始化为0
+            if (d == 0) ((ICItemImm *) icItem)->value = 0;
+            else {
+                int len;
+                if (d == 1) len = arrayDimensions[0];
+                else len = arrayDimensions[0] * arrayDimensions[1];
+                ((ICItemArray *) icItem)->value = new int[len];
+                for (int j = 0; j < len; ++j) ((ICItemArray *) icItem)->value[j] = 0;
+            }
+        }
         switch (d) {
             case 0: {
                 auto *var = new Var();
                 auto *varEntry = new SymbolTableEntry(ident, var, ident->getToken()->lineNumber, false);
                 currentTable->addEntry(*varEntry->getName(), varEntry);
+                icTranslator->translate_VarDef(icItem, IS_GLOBAL, varEntry, hasInitVal);
                 return;
             }
             case 1: {
                 auto *array1 = new Array1(arrayDimensions[0]);
-                auto *array1Entry = new SymbolTableEntry(ident, array1, ident->getToken()->lineNumber, false);
+                auto *array1Entry = new SymbolTableEntry(ident, array1,
+                                                         ident->getToken()->lineNumber, false);
                 currentTable->addEntry(*array1Entry->getName(), array1Entry);
+                icTranslator->translate_ArrayDef(icItem, IS_GLOBAL, array1Entry,
+                                                 hasInitVal, arrayDimensions[0]);
                 return;
             }
             default:
                 auto *array2 = new Array2(arrayDimensions[0], arrayDimensions[1]);
-                auto *array2Entry = new SymbolTableEntry(ident, array2, ident->getToken()->lineNumber, false);
+                auto *array2Entry = new SymbolTableEntry(ident, array2,
+                                                         ident->getToken()->lineNumber, false);
                 currentTable->addEntry(*array2Entry->getName(), array2Entry);
+                icTranslator->translate_ArrayDef(icItem, IS_GLOBAL, array2Entry,
+                                                 hasInitVal, arrayDimensions[0] * arrayDimensions[1]);
                 return;
         }
     }
@@ -226,7 +248,7 @@ void ErrorHandler::check_ConstDef(Node *node) {
                 auto *varConstEntry = new SymbolTableEntry(
                         ident, varConst, ident->getToken()->lineNumber, false);
                 currentTable->addEntry(*varConstEntry->getName(), varConstEntry);
-                icTranslator->translate_ConstVarDef(isGlobal(), varConstEntry);
+                icTranslator->translate_ConstVarDef(IS_GLOBAL, varConstEntry);
                 return;
             }
             case 1: {
@@ -235,7 +257,7 @@ void ErrorHandler::check_ConstDef(Node *node) {
                 auto *array1ConstEntry = new SymbolTableEntry(
                         ident, array1Const, ident->getToken()->lineNumber, false);
                 currentTable->addEntry(*array1ConstEntry->getName(), array1ConstEntry);
-                icTranslator->translate_ConstArray1Def(isGlobal(), array1ConstEntry, d1);
+                icTranslator->translate_ConstArray1Def(IS_GLOBAL, array1ConstEntry, d1);
                 return;
             }
             default:
@@ -245,7 +267,7 @@ void ErrorHandler::check_ConstDef(Node *node) {
                 auto *array2ConstEntry = new SymbolTableEntry(
                         ident, array2Const, ident->getToken()->lineNumber, false);
                 currentTable->addEntry(*array2ConstEntry->getName(), array2ConstEntry);
-                icTranslator->translate_ConstArray2Def(isGlobal(), array2ConstEntry, d1, d2);
+                icTranslator->translate_ConstArray2Def(IS_GLOBAL, array2ConstEntry, d1, d2);
                 return;
         }
     }
@@ -282,7 +304,7 @@ SymbolTableEntry *ErrorHandler::check_AddExp(Node *node, bool fromConstExp, int 
 // InitVal → Exp | '{' [ InitVal { ',' InitVal } ] '}'
 void ErrorHandler::check_InitVal(Node *node, int d, ICItem *icItem) {
     int temp = 0;
-    if (isGlobal()) {  // 全局变量，直接求出InitVal，这期间不用生成中间代码
+    if (IS_GLOBAL) {  // 全局变量，直接求出InitVal，这期间不用生成中间代码
         switch (d) {
             case 0: {
                 this->check_Exp(node->getFirstChild(), true, &temp, icItem);
@@ -296,43 +318,8 @@ void ErrorHandler::check_InitVal(Node *node, int d, ICItem *icItem) {
                 icItemArray->length = length;
                 for (int i = 1, j = 0; i < node->getChildrenNum() - 1; i += 2) {
                     Node *exp = node->getChildAt(i)->getFirstChild();
-                    this->check_Exp(exp, true, &temp, icItemArray);
+                    this->check_Exp(exp, true, &temp, icItem);
                     icItemArray->value[j++] = temp;
-                }
-                return;
-            }
-            default: {
-                auto *icItemArray = (ICItemArray *) icItem;
-                const int d1 = (node->getChildrenNum() - 1) / 2;
-                const int d2 = (node->getFirstChild()->getChildrenNum() - 1) / 2;
-                icItemArray->value = new int[d1 * d2];
-                icItemArray->length = d1 * d2;
-                int k = 0;
-                for (int i = 1; i < node->getChildrenNum() - 1; i += 2) {
-                    for (int j = 1; j < node->getFirstChild()->getChildrenNum() - 1; j += 2) {
-                        Node *exp = node->getChildAt(i)->getChildAt(j)->getFirstChild();
-                        this->check_Exp(exp, true, &temp, icItemArray);
-                        icItemArray->value[k++] = temp;
-                    }
-                }
-                return;
-            }
-        }
-    } else {  // 非全局变量初始值，不能求出常数，需要生成相应的中间代码(退出函数，回到varDef后生成)
-        switch (d) {
-            case 0: {
-                this->check_Exp(node->getFirstChild(), false, &temp, icItem);
-                return;
-            }
-            case 1: {
-                auto *icItemArray = (ICItemArray *) icItem;
-                const int length = (node->getChildrenNum() - 1) / 2;
-                icItemArray->value = new int[length];
-                icItemArray->length = length;
-                for (int i = 1; i < node->getChildrenNum() - 1; i += 2) {
-                    Node *exp = node->getChildAt(i)->getFirstChild();
-                    this->check_Exp(exp, false, &temp, icItemArray);
-
                 }
                 return;
             }
@@ -348,6 +335,39 @@ void ErrorHandler::check_InitVal(Node *node, int d, ICItem *icItem) {
                         Node *exp = node->getChildAt(i)->getChildAt(j)->getFirstChild();
                         this->check_Exp(exp, true, &temp, icItem);
                         icItemArray->value[k++] = temp;
+                    }
+                }
+                return;
+            }
+        }
+    } else {  // 非全局变量初始值，不能求出常数，需要生成相应的中间代码(退出函数，回到varDef后生成)
+        switch (d) {
+            case 0: {
+                this->check_Exp(node->getFirstChild(), false, &temp, icItem);
+                return;
+            }
+            case 1: {
+                auto *icItemArray = (ICItemArray *) icItem;
+                std::vector<ICItemVar *> *arrayItems = icItemArray->itemsToInitArray;
+
+                for (int i = 1; i < node->getChildrenNum() - 1; i += 2) {
+                    Node *exp = node->getChildAt(i)->getFirstChild();
+                    auto *itemVar = new ICItemVar(IS_GLOBAL);
+                    this->check_Exp(exp, false, &temp, itemVar);
+                    arrayItems->push_back(itemVar);
+                }
+                return;
+            }
+            default: {
+                auto *icItemArray = (ICItemArray *) icItem;
+                std::vector<ICItemVar *> *arrayItems = icItemArray->itemsToInitArray;
+
+                for (int i = 1; i < node->getChildrenNum() - 1; i += 2) {
+                    for (int j = 1; j < node->getFirstChild()->getChildrenNum() - 1; j += 2) {
+                        Node *exp = node->getChildAt(i)->getChildAt(j)->getFirstChild();
+                        auto *itemVar = new ICItemVar(IS_GLOBAL);
+                        this->check_Exp(exp, false, &temp, itemVar);
+                        arrayItems->push_back(itemVar);
                     }
                 }
                 return;

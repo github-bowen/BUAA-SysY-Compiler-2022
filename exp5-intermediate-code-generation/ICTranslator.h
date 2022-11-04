@@ -29,11 +29,21 @@ public:
 
     std::vector<ICEntry *> *icEntries;
 
+    /* 常量声明 */
+
     void translate_ConstVarDef(bool isGlobal, SymbolTableEntry *tableEntry) const;
 
     void translate_ConstArray1Def(bool isGlobal, SymbolTableEntry *tableEntry, int d1) const;
 
     void translate_ConstArray2Def(bool isGlobal, SymbolTableEntry *tableEntry, int d1, int d2) const;
+
+    /* 变量声明 */
+
+    void translate_VarDef(ICItem *initItem, bool isGlobal,
+                          SymbolTableEntry *tableEntry, bool hasInitVal) const;
+
+    void translate_ArrayDef(ICItem *initItem, bool isGlobal,
+                            SymbolTableEntry *tableEntry, bool hasInitVal, int length) const;
 };
 
 

@@ -15,7 +15,7 @@ public:
 
     explicit ErrorHandler(Node *);
 
-    bool isGlobal() const;
+    bool IS_GLOBAL() const;
 
     void check();
 

@@ -15,20 +15,13 @@ public:
     const ICItem *operator1;
     const ICItem *operator2;
     const ICItem *operator3;
+    const int opNum;
     const std::vector<ICItem *> *params;
 
-    /**
-     *
-     * @param type
-     * @param operator1
-     * @param operator2
-     * @param operator3
-     * @param params
-     */
-    ICEntry(ICEntryType type, ICItem *operator1, ICItem *operator2 = nullptr,
-            ICItem *operator3 = nullptr)
-            : entryType(type), operator1(operator1), operator2(operator2),
-              operator3(operator3), params(nullptr) {}
+
+    ICEntry(ICEntryType type, ICItem *operator1);
+
+    ICEntry(ICEntryType type, ICItem *operator1, ICItem *operator2);
 };
 
 #endif //IC_ENTRY_H
