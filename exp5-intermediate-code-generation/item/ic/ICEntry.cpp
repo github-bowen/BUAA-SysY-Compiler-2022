@@ -14,4 +14,12 @@ ICEntry::ICEntry(ICEntryType type, ICItem *operator1, ICItem *operator2) :
         operator2(operator2),
         operator3(nullptr),
         params(nullptr),
-        opNum(1) {}
+        opNum(2) {}
+
+ICEntry::ICEntry(ICEntryType type, ICItem *operator1, ICItem *operator2, ICItem *operator3) :
+        entryType(type),
+        operator1(operator1),
+        operator2(operator2),
+        operator3(operator3),
+        params(nullptr),
+        opNum(3) {}

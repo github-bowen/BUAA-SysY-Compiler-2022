@@ -39,19 +39,19 @@ public:
 
     ConstValue *check_ConstInitVal(Node *node, int d);
 
-    SymbolTableEntry *check_AddExp(Node *node, bool fromConstExp, int *constExpValue);
+    SymbolTableEntry *check_AddExp(Node *node, bool fromConstExp, int *constExpValue, ICItem *icItem);
 
-    SymbolTableEntry *check_MulExp(Node *node, bool fromConstExp, int *constExpValue);
+    SymbolTableEntry *check_MulExp(Node *node, bool fromConstExp, int *constExpValue, ICItem *icItem);
 
-    SymbolTableEntry *check_UnaryExp(Node *node, bool fromConstExp, int *constExpValue);
+    SymbolTableEntry *check_UnaryExp(Node *node, bool fromConstExp, int *constExpValue, ICItem *icItem);
 
-    SymbolTableEntry *check_PrimaryExp(Node *node, bool fromConstExp, int *constExpValue);
+    SymbolTableEntry *check_PrimaryExp(Node *node, bool fromConstExp, int *constExpValue, ICItem *icItem);
 
     SymbolTableEntry *check_Exp(Node *node, bool fromConstExp, int *constExpValue, ICItem *icItem);
 
-    SymbolTableEntry *check_LVal(Node *node, bool fromConstExp, int *constExpValue);
+    SymbolTableEntry *check_LVal(Node *node, bool fromConstExp, int *constExpValue, ICItem *icItem);
 
-    SymbolTableEntry *check_Number(Node *node, bool fromConstExp, int *constExpValue);
+    SymbolTableEntry *check_Number(Node *node, bool fromConstExp, int *constExpValue, ICItem *icItem);
 
     std::vector<SymbolTableEntry *> *check_FuncRParams(Node *node,
                                                        SymbolTableEntry *entry);

@@ -21,6 +21,9 @@ enum class ICEntryType {
     Mul,
     Div,
     Mod,
+    Not,
+    Neg,
+    ArrayGet,
     // 第二次代码生成作业:
 };
 

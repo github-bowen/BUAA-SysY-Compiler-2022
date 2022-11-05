@@ -29,9 +29,24 @@ SymbolTableEntry *SymbolTable::getEntryByNameFromAllTables(Node *node) {
     return nullptr;
 }
 
-void SymbolTable::addEntry(const std::string& name, SymbolTableEntry *entry) {
+ICItem *SymbolTable::getICItemByNameFromAllTables(Node *node) {
+    SymbolTable *table = this;
+    while (table != nullptr) {
+        if (table->nameExistedInCurrentTable(node)) {
+            return table->name2icItem.find(node->getToken()->value)->second;
+        }
+        table = table->parent;
+    }
+    return nullptr;
+}
+
+void SymbolTable::addEntry(const std::string &name, SymbolTableEntry *entry) {
     assert(name2symbolTableEntry.count(name) == 0);
     this->name2symbolTableEntry.insert({name, entry});
+}
+
+void SymbolTable::addICItem(const std::string &name, ICItem *icItem) {
+    name2icItem.insert({name, icItem});
 }
 
 void SymbolTable::addChildTable(SymbolTable *child) {
@@ -41,7 +56,7 @@ void SymbolTable::addChildTable(SymbolTable *child) {
 void SymbolTable::printAllNames() {
     static int i = 1;
     std::cout << "\nTimes for printing: " << i << "\n";
-    for (auto& it : name2symbolTableEntry) {
+    for (auto &it: name2symbolTableEntry) {
         std::cout << it.first << " ";
     }
     i++;

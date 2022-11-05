@@ -22,6 +22,8 @@ public:
     ICEntry(ICEntryType type, ICItem *operator1);
 
     ICEntry(ICEntryType type, ICItem *operator1, ICItem *operator2);
+
+    ICEntry(ICEntryType type, ICItem *operator1, ICItem *operator2, ICItem *operator3);
 };
 
 #endif //IC_ENTRY_H
