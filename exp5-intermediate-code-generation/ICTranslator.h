@@ -96,7 +96,8 @@ public:
     void translate_MainFunc() const;
 
     /* 函数定义 */
-    ICItemFunc *translate_FuncDef(SymbolTableEntry *funcEntry) const;
+    ICItemFunc *translate_FuncDef(SymbolTableEntry *funcEntry,
+                                  SymbolTable *currentTable) const;
 
     /* 函数调用 */
     void translate_FuncCall(std::string *funcName, std::vector<ICItem *> *params = nullptr);

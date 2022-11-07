@@ -61,6 +61,7 @@ void MipsTranslator::translate() {
         ICEntry *defEntry = mainStream->at(i);
         assert(defEntry->isGlobalVarOrConstDef());
         translate_GlobalVarOrArrayDef(defEntry);
+        i++;
     }
     // 字符串片段(纯字符串部分)定义
     mipsOutput << "\n# string tokens: \n";
@@ -108,10 +109,15 @@ void MipsTranslator::translate() {
             case ICEntryType::FuncCall: {
                 auto *calledFunc = (const ICItemFunc *) (entry->calledFunc);
                 pushTempReg();
+                int paramNum = 0;
                 if (entry->params != nullptr && !entry->params->empty()) {
-                    pushParams(entry->params);
+                    paramNum = pushParams(entry->params);
                 }
                 jal(calledFunc);
+                if (paramNum > 0) {
+                    addi(Reg::$sp, Reg::$sp, paramNum * 4);
+                }
+                popTempReg();
                 break;
             }
             case ICEntryType::FuncReturnWithValue:  // 主函数结束
@@ -262,9 +268,241 @@ void MipsTranslator::translate() {
         }
         i++;
     }
+    mipsOutput << "\n\n\n\n" << "# self defined functions\n\n";
+    for (const auto &item: *name2icItemFunc) {
+        ICItemFunc *func = item.second;
+        mipsOutput << func->funcLabel->toString() << ":\n\n";
+        translate_FuncDef(func);
+        mipsOutput << "\n\n\n";
+    }
+    mipsOutput << std::flush;
 }
 
-void MipsTranslator::pushParams(const std::vector<ICItem *> *params) {
+void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
+    funcFParamId2offset.clear();
+    std::vector<ICItem *> *params = func->params;
+    const int num = params->size();
+
+    int offset = 0;
+    for (const auto *param: *params) {
+        auto *var = ((ICItemVar *) param);
+        funcFParamId2offset.insert({var->varId, offset});
+        offset += 4;
+    }
+
+    std::vector<ICEntry *> *funcEntries = func->entries;
+    int i = 0;
+    bool findReturn = false;
+    while (i < funcEntries->size()) {
+        ICEntry *entry = funcEntries->at(i);
+        ICItem *op1 = entry->operator1, *op2 = entry->operator2, *op3 = entry->operator3;
+        switch (entry->entryType) {
+            case ICEntryType::VarDefine: {  // 局部变量
+                const bool hasInitValue = op2 != nullptr;
+                auto *var = (ICItemVar *) op1;
+                localVarId2mem.insert({var->varId, tempStackAddressTop});
+                tempStackAddressTop += 4;
+                if (hasInitValue) {
+                    assert(op2->type == ICItemType::Var);
+                    auto *rightValue = (ICItemVar *) op2;
+                    lw(Reg::$t0, rightValue);
+                    sw(Reg::$t0, var);
+                }
+                break;
+            }
+            case ICEntryType::ConstVarDefine: {  // 局部常量
+                auto *constVar = (ICItemVar *) op1;
+                localVarId2mem.insert({constVar->varId, tempStackAddressTop});
+                tempStackAddressTop += 4;
+                const int initValue = constVar->value;
+                li(Reg::$t0, initValue);
+                sw(Reg::$t0, constVar);
+                break;
+            }
+            case ICEntryType::ArrayDefine:
+                break;
+            case ICEntryType::ConstArrayDefine:
+                break;
+                // case ICEntryType::FuncDefine:  // 非法，不应该出现这个
+            case ICEntryType::FuncCall: {
+                auto *calledFunc = (const ICItemFunc *) (entry->calledFunc);
+                pushTempReg();
+                int paramNum = 0;
+                if (entry->params != nullptr && !entry->params->empty()) {
+                    paramNum = pushParams(entry->params);
+                }
+                jal(calledFunc);
+                if (paramNum > 0) {
+                    addi(Reg::$sp, Reg::$sp, paramNum * 4);
+                }
+                popTempReg();
+                break;
+            }
+            case ICEntryType::FuncReturnWithValue: {
+                findReturn = true;
+                if (op1->type == ICItemType::Imm) {
+                    li(Reg::$v0, ((ICItemImm *) op1)->value);
+                } else {
+                    lw(Reg::$v0, ((ICItemVar *) op1));
+                }
+                jr();
+                break;
+            }
+            case ICEntryType::FuncReturn:
+                findReturn = true;
+                // case ICEntryType::MainFuncEnd:
+                jr();
+                break;
+            case ICEntryType::Getint: {
+                auto *dst = ((ICItemVar *) op1);
+                getint(dst);
+                break;
+            }
+            case ICEntryType::Print: {
+                auto *itemString = ((ICItemString *) op1);
+                for (const auto *strItem: *(itemString->stringItems)) {
+                    if (strItem->isString) {
+                        const int strId = strItem->pureStringId;
+                        printStr(strId);
+                    } else {
+                        const ICItem *icItem = strItem->intItem;
+                        assert(icItem->type == ICItemType::Var);
+                        printInt((ICItemVar *) icItem);
+                    }
+                }
+                break;
+            }
+            case ICEntryType::Assign: {
+                auto *left = (ICItemVar *) op1, *right = (ICItemVar *) op2;
+                lw(Reg::$t0, right);
+                sw(Reg::$t0, left);
+                break;
+            }
+            case ICEntryType::Add: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value + r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    addu(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    addu(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
+                break;
+            }
+            case ICEntryType::Sub: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value - r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    subu(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    subu(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
+                break;
+            }
+            case ICEntryType::Mul: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value * r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    mul(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    mul(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
+                break;
+            }
+            case ICEntryType::Div: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value / r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    divu(Reg::$t0, Reg::$t1);
+                    mflo(Reg::$t2);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    divu(Reg::$t0, Reg::$t1);
+                    mflo(Reg::$t2);
+                    sw(Reg::$t2, dst);
+                }
+                break;
+            }
+            case ICEntryType::Mod: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value % r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    divu(Reg::$t0, Reg::$t1);
+                    mfhi(Reg::$t2);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    divu(Reg::$t0, Reg::$t1);
+                    mfhi(Reg::$t2);
+                    sw(Reg::$t2, dst);
+                }
+                break;
+            }
+            case ICEntryType::Not:
+                break;
+            case ICEntryType::Neg: {
+                auto *dst = (ICItemVar *) op1, *src = (ICItemVar *) op2;
+                if (src->isConst) {
+                    li(Reg::$t0, src->value);
+                    sw(Reg::$t0, dst);
+                } else {
+                    lw(Reg::$t0, src);
+                    subu(Reg::$t0, Reg::$zero, Reg::$t0);
+                    sw(Reg::$t0, dst);
+                }
+                break;
+            }
+            case ICEntryType::ArrayGet:
+                break;
+        }
+        i++;
+    }
+    if (!findReturn) jr();
+    funcFParamId2offset.clear();
+}
+
+// 返回params个数
+int MipsTranslator::pushParams(const std::vector<ICItem *> *params) {
+    mipsOutput << "\n\n# store funcrtion params\n";
     const int num = params->size();
     addi(Reg::$sp, Reg::$sp, -num * 4);
     int offset = 0;
@@ -274,12 +512,23 @@ void MipsTranslator::pushParams(const std::vector<ICItem *> *params) {
             li(Reg::$t0, imm->value);
         } else if (param->type == ICItemType::Var) {
             auto *var = (ICItemVar *) param;
-            lw(Reg::$t0, var);
+            if (var->isConst) {
+                li(Reg::$t0, var->value);
+            } else if (var->isGlobal) {
+                la(Reg::$t0, var->toString());
+                lw(Reg::$t0, 0, Reg::$t0);
+            } else {
+                lw(Reg::$t0, var);
+            }
         }
         sw(Reg::$t0, offset, Reg::$sp);
         offset += 4;
     }
+
+    mipsOutput << "\n\n";
+    return num;
 }
+
 
 void MipsTranslator::translate_GlobalVarOrArrayDef(ICEntry *defEntry) {
     if (defEntry->entryType == ICEntryType::ConstVarDefine) {
@@ -305,8 +554,38 @@ void MipsTranslator::translate_GlobalVarOrArrayDef(ICEntry *defEntry) {
 
 }
 
+bool MipsTranslator::isFuncFParam(ICItemVar *var) {
+    return funcFParamId2offset.find(var->varId) != funcFParamId2offset.end();
+}
+
 void MipsTranslator::lw(Reg reg, ICItemVar *var) {
     int addr;
+    ICItem *item = var;
+    if (item->reference != nullptr) {
+        while (item->reference != nullptr) {
+            item = item->reference;
+        }
+        if (item->type == ICItemType::Imm) {
+            li(reg, ((ICItemImm *) item)->value);
+            return;
+        } else {
+            var = (ICItemVar *) item;
+        }
+    }
+    if (var->isGlobal) {
+        la(reg, var->toString());
+        lw(reg, 0, reg);
+        return;
+    }
+    if (isFuncFParam(var)) {
+        addr = funcFParamId2offset.find(var->varId)->second;
+        mipsOutput << "lw " << reg2s.find(reg)->second << ", " << addr << "($sp)\n";
+        return;
+    }
+    if (var->isConst) {
+        li(reg, var->value);
+        return;
+    }
     if (var->isTemp) {
         addr = tempVarId2mem.find(var->tempVarId)->second;
     } else {
@@ -315,19 +594,56 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var) {
     mipsOutput << "lw " << reg2s.find(reg)->second << ", " << addr << "($0)\n";
 }
 
+void MipsTranslator::lw(Reg dst, int offset, Reg base) {
+    mipsOutput << "lw " << reg2s.find(dst)->second << ", " <<
+               std::to_string(offset) << "(" << reg2s.find(base)->second << ")\n";
+}
+
 void MipsTranslator::sw(Reg reg, ICItemVar *var) {
     int addr;
+    mipsOutput << std::flush;
+    ICItem *item = var;
+    if (item->reference != nullptr) {
+        while (item->reference != nullptr) {
+            item = item->reference;
+        }
+//        sw(reg, (ICItemVar *) item);
+//        return;
+        var = (ICItemVar *) item;
+    }
+    if (var->isGlobal) {
+        la(Reg::$t9, var->toString());
+        sw(reg, 0, Reg::$t9);
+        return;
+    }
+    if (isFuncFParam(var)) {
+        addr = funcFParamId2offset.find(var->varId)->second;
+        mipsOutput << "sw " << reg2s.find(reg)->second << ", " << addr << "($sp)\n";
+        return;
+    }
     if (var->isTemp) {
-        addr = tempVarId2mem.find(var->tempVarId)->second;
+        if (tempVarId2mem.find(var->tempVarId) == tempVarId2mem.end()) {
+            tempVarId2mem.insert({var->tempVarId, tempStackAddressTop});
+            addr = tempStackAddressTop;
+            tempStackAddressTop += 4;
+        } else {
+            addr = tempVarId2mem.find(var->tempVarId)->second;
+        }
     } else {
-        addr = localVarId2mem.find(var->varId)->second;
+        if (localVarId2mem.find(var->varId) == localVarId2mem.end()) {
+            localVarId2mem.insert({var->varId, tempStackAddressTop});
+            addr = tempStackAddressTop;
+            tempStackAddressTop += 4;
+        } else {
+            addr = localVarId2mem.find(var->varId)->second;
+        }
     }
     mipsOutput << "sw " << reg2s.find(reg)->second << ", " << addr << "($0)\n";
 }
 
 void MipsTranslator::sw(Reg src, int offset, Reg base) {
     mipsOutput << "sw " << reg2s.find(src)->second << ", " <<
-               std::to_string(offset) << reg2s.find(base)->second << "\n";
+               std::to_string(offset) << "(" << reg2s.find(base)->second << ")\n";
 }
 
 void MipsTranslator::li(Reg reg, int imm) {
@@ -338,13 +654,27 @@ void MipsTranslator::move(Reg dst, Reg src) {
     mipsOutput << "move " << reg2s.find(dst)->second << ", " << reg2s.find(src)->second << "\n";
 }
 
-void MipsTranslator::pushTempReg() {  // t0 - t9
-    addi(Reg::$sp, Reg::$sp, -40);
+void MipsTranslator::pushTempReg() {  // t0 - t9, ra
+    mipsOutput << "\n\n# store temp regs\n";
+    addi(Reg::$sp, Reg::$sp, -44);
     int offset = 0;
     for (const Reg reg: tempRegs) {
         sw(reg, offset, Reg::$sp);
         offset += 4;
     }
+    sw(Reg::$ra, offset, Reg::$sp);
+}
+
+void MipsTranslator::popTempReg() {
+    mipsOutput << "\n\n# recover temp regs\n";
+    int offset = 0;
+    for (const Reg reg: tempRegs) {
+        lw(reg, offset, Reg::$sp);
+        offset += 4;
+    }
+    lw(Reg::$ra, offset, Reg::$sp);
+    addi(Reg::$sp, Reg::$sp, 44);
+    mipsOutput << "\n\n";
 }
 
 void MipsTranslator::addi(Reg dst, Reg src, int i) {
@@ -374,7 +704,7 @@ void MipsTranslator::printStr(int strId) {
 }
 
 void MipsTranslator::la(Reg reg, const std::string &label) {
-    mipsOutput << "la " << reg2s.find(reg)->second << ", " + label;
+    mipsOutput << "la " << reg2s.find(reg)->second << ", " + label << "\n";
 }
 
 std::string MipsTranslator::strId2label(int strId) {
@@ -420,6 +750,10 @@ void MipsTranslator::mfhi(Reg reg) {
 
 void MipsTranslator::mflo(Reg reg) {
     mipsOutput << "mflo " + reg2s.find(reg)->second << "\n";
+}
+
+void MipsTranslator::jr() {
+    mipsOutput << "jr $ra\n";
 }
 
 

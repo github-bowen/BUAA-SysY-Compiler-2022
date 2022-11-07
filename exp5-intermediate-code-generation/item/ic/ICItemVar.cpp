@@ -52,15 +52,15 @@ std::string ICItemVar::toString() const{
     } else {
         if (isGlobal) {
             if (isConst) {
-                return "global_const_var" + std::to_string(varId);
+                return "global_const_var" + std::to_string(abs(varId));
             } else {
-                return "global_var" + std::to_string(varId);
+                return "global_var" + std::to_string(abs(varId));
             }
         } else {
             if (isConst) {
-                return "local_const_var" + std::to_string(varId);
+                return "local_const_var" + std::to_string(abs(varId));
             } else {
-                return "local_var" + std::to_string(varId);
+                return "local_var" + std::to_string(abs(varId));
             }
         }
     }

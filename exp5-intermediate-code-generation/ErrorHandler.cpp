@@ -84,7 +84,7 @@ void ErrorHandler::check_FuncDef(Node *node) {
     if (node->getChildAt(3)->is(GrammarItem::FuncFParams)) {  // 有参数
         this->check_FuncFParams(node->getChildAt(3), funcEntry);
     }
-    ICItemFunc *icItemFunc = icTranslator->translate_FuncDef(funcEntry);
+    ICItemFunc *icItemFunc = icTranslator->translate_FuncDef(funcEntry, currentTable);
     auto *errorNode = dynamic_cast<ErrorNode *>(node->getChildAt(-2));  // 倒数第二个
     if (errorNode != nullptr) {
         errorLog.insert({errorNode->lineNum, errorNode->error()});
@@ -490,7 +490,7 @@ SymbolTableEntry *ErrorHandler::check_UnaryExp(Node *node, bool fromConstExp,
         auto *srcICItem = new ICItemVar(IS_GLOBAL);
         SymbolTableEntry *ret = this->check_UnaryExp(node->getChildAt(1), fromConstExp,
                                                      constExpValue, srcICItem);
-        ICEntryType op = icTranslator->symbol2unaryOp(firstChild->getToken()->symbol);
+        ICEntryType op = icTranslator->symbol2unaryOp(firstChild->getFirstChild()->getToken()->symbol);
         icTranslator->translate_UnaryOperator(op, dstICItem, srcICItem);
         *constExpValue = (op == ICEntryType::Neg) ? -(*constExpValue) : !(*constExpValue);
         return ret;
@@ -626,7 +626,7 @@ SymbolTableEntry *ErrorHandler::check_LVal(Node *node, bool fromConstExp,
             assert(definedEntry->isConst());
             *constExpValue = definedEntry->varGet();
         }
-        icItem->type = ICItemType::Reference;
+        icItem->type = ICItemType::Var;
         ICItem *existedItem = currentTable->getICItemByNameFromAllTables(ident);
         icItem->reference = existedItem;
 //        icTranslator->translate_BinaryOperator(ICEntryType::Assign, icItem, existedItem);
@@ -703,12 +703,16 @@ SymbolTableEntry *ErrorHandler::check_Number(Node *node, bool fromConstExp,
 #endif
     *constExpValue = std::stoi(
             node->getFirstChild()->getToken()->value);
-    if (icItem->type == ICItemType::Imm) {
-        ((ICItemImm *) icItem)->value = *constExpValue;
-    } else {
-        assert(icItem->type == ICItemType::Var);
-        ((ICItemVar *) icItem)->isConst = true;
-        ((ICItemVar *) icItem)->value = *constExpValue;
+    if (icItem != nullptr) {
+        if (icItem->type == ICItemType::Imm) {
+            ((ICItemImm *) icItem)->value = *constExpValue;
+        } else {
+            if (icItem->type != ICItemType::Var) {
+                int a;
+            }
+            ((ICItemVar *) icItem)->isConst = true;
+            ((ICItemVar *) icItem)->value = *constExpValue;
+        }
     }
     return nullptr;
 }

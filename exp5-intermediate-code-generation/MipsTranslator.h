@@ -18,17 +18,23 @@ public:
 
     std::map<Reg, int> reg2id;
 
+    std::map<int, int> funcFParamId2offset;
+
     ICTranslator *icTranslator;
 
     explicit MipsTranslator(ICTranslator *icTranslator);
 
     void translate();
 
+    void translate_FuncDef(ICItemFunc *func);
+
     void translate_GlobalVarOrArrayDef(ICEntry *);
 
-    void pushParams(const std::vector<ICItem *> *params);
+    int pushParams(const std::vector<ICItem *> *params);
 
     void lw(Reg reg, ICItemVar *var);
+
+    void lw(Reg dst, int offset, Reg base);
 
     void sw(Reg reg, ICItemVar *var);
 
@@ -39,6 +45,8 @@ public:
     void move(Reg dst, Reg src);
 
     void pushTempReg();
+
+    void popTempReg();
 
     void addi(Reg dst, Reg src, int i);
 
@@ -69,6 +77,10 @@ public:
     void mfhi(Reg reg);
 
     void mflo(Reg reg);
+
+    void jr();
+
+    bool isFuncFParam(ICItemVar *var);
 
 };
 

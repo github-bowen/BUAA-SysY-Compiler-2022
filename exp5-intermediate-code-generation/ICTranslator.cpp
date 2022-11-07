@@ -234,9 +234,16 @@ void ICTranslator::translate_printf(std::vector<int> *indexOfPercentSign,
     }
 }
 
-ICItemFunc *ICTranslator::translate_FuncDef(SymbolTableEntry *funcEntry) const {
+ICItemFunc *ICTranslator::translate_FuncDef(SymbolTableEntry *funcEntry,
+                                            SymbolTable *currentTable) const {
     auto *func = new ICItemFunc(funcEntry);
     name2icItemFunc->insert({funcEntry->getName(), func});
+    for (const auto *p : *(func->params)) {
+        // TODO: 假设都是变量
+        auto *var = (ICItemVar *)p;
+        currentTable->addICItem(*var->originalName, var);
+    }
+
     return func;
 }
 
