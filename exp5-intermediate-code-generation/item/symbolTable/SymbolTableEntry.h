@@ -23,9 +23,8 @@
  */
 
 class SymbolTableEntry {
-private:
-    const SymbolTableEntryType type;
 public:
+    const SymbolTableEntryType type;
     explicit SymbolTableEntry(int value);
 
     ~SymbolTableEntry();

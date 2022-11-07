@@ -16,14 +16,16 @@ public:
     const std::string *originalName;
     const SymbolTableEntry *symbolTableEntry;
     const bool isGlobal;
-    const bool isConst;
+    bool isConst;
     const int varId;
-    const int value;
+    int value;
 
     ICItemVar(const std::string *originalName, SymbolTableEntry *symbolTableEntry,
               bool isConst, bool isGlobal, int value = 0);
 
     explicit ICItemVar(bool isGlobal, int value = 0);
+
+    std::string toString() const;
 
 };
 

@@ -1,0 +1,15 @@
+.data 0x10010000
+temp:  .space  160000
+
+
+# string tokens: 
+
+
+.text 0x00400000
+
+# main function
+lw $t0, 0($0)
+sw $t0, 268500992($0)
+
+li $v0, 10
+syscall

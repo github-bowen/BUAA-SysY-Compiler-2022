@@ -13,6 +13,7 @@
 #include "item/ic/ICItemVar.h"
 #include "item/ic/ICEntryType.h"
 #include "item/ic/ICEntry.h"
+#include "item/ic/ICItemFunc.h"
 
 /**
  * Intermediate Code Translator 中间代码翻译器
@@ -42,7 +43,15 @@ class ICTranslator {
 public:
     static ICTranslator *getInstance();
 
-    std::vector<ICEntry *> *icEntries;
+    std::vector<ICEntry *> *mainEntries;  // 包括全局变量、常量和main函数
+
+    std::map<int, std::string *> *id2allPureString;
+
+    std::map<std::string *, ICItemFunc *> *name2icItemFunc;
+
+    ICItemFunc *currentFunc;
+
+    bool inFunc{false};
 
     ICEntryType symbol2binaryOp(Symbol symbol) const;
 
@@ -74,6 +83,31 @@ public:
 
     /* 单目运算符 */
     void translate_UnaryOperator(ICEntryType icEntryType, ICItem *dst, ICItem *src) const;
+
+    /* getint() */
+    void translate_getint(ICItem *dst) const;
+
+    /* printf */
+    void translate_printf(std::vector<int> *indexOfPercentSign,
+                          std::vector<ICItem *> *intItems,
+                          std::string *s) const;
+
+    /* 转到主函数 */
+    void translate_MainFunc() const;
+
+    /* 函数定义 */
+    ICItemFunc *translate_FuncDef(SymbolTableEntry *funcEntry) const;
+
+    /* 函数调用 */
+    void translate_FuncCall(std::string *funcName, std::vector<ICItem *> *params = nullptr);
+
+    /* 函数返回 */
+    void translate_return(ICItem *) const;
+
+    void translate_return() const;
+
+    /* 中间代码输出 */
+    void output();
 
 
 };

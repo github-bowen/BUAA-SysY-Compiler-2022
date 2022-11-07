@@ -7,7 +7,8 @@ enum class ICItemType {
     Label,  // 函数、数组、循环跳转、字符串存储等用到的标签 (用于挑战到函数入口)
     Array,
     Var,
-    Func
+    Func,
+    Reference
 };
 
 #endif //IC_ITEM_TYPE_H

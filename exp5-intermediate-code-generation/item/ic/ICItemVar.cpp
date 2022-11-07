@@ -38,10 +38,30 @@ ICItemVar::ICItemVar(bool isGlobal, int value)
 
 int ICItemVar::generateVarId() {
     static int i = 0;
-    return ++i;
+    return --i;
 }
 
 int ICItemVar::generateTempVarId() {
     static int i = 0;
     return ++i;
+}
+
+std::string ICItemVar::toString() const{
+    if (isTemp) {
+        return "temp_var" + std::to_string(tempVarId);
+    } else {
+        if (isGlobal) {
+            if (isConst) {
+                return "global_const_var" + std::to_string(varId);
+            } else {
+                return "global_var" + std::to_string(varId);
+            }
+        } else {
+            if (isConst) {
+                return "local_const_var" + std::to_string(varId);
+            } else {
+                return "local_var" + std::to_string(varId);
+            }
+        }
+    }
 }

@@ -33,6 +33,8 @@ public:
     explicit ICItemArray(bool isGlobal, int *value = nullptr);
 
     ~ICItemArray() override;
+
+    std::string toString() const;
 };
 
 #endif //IC_ITEM_ARRAY_H

@@ -84,13 +84,21 @@ void ErrorHandler::check_FuncDef(Node *node) {
     if (node->getChildAt(3)->is(GrammarItem::FuncFParams)) {  // 有参数
         this->check_FuncFParams(node->getChildAt(3), funcEntry);
     }
+    ICItemFunc *icItemFunc = icTranslator->translate_FuncDef(funcEntry);
     auto *errorNode = dynamic_cast<ErrorNode *>(node->getChildAt(-2));  // 倒数第二个
     if (errorNode != nullptr) {
         errorLog.insert({errorNode->lineNum, errorNode->error()});
     }
+
     createSymbolTableBeforeEnterBlock = true;
     receiveReturn = false;
+
+    icTranslator->currentFunc = icItemFunc;
+
     this->check_Block(node->getLastChild(), true);
+
+    icTranslator->currentFunc = nullptr;
+
     if (currentFunction == Func::IntFunc && (!receiveReturn)) {
         errorLog.insert({funcEndLineNum, errorType2string.find(ErrorType::ReturnMissing)->second});
     }
@@ -136,7 +144,11 @@ void ErrorHandler::check_MainFuncDef(Node *node) {
     createSymbolTableBeforeEnterBlock = true;
     receiveReturn = false;
     currentFunction = Func::MainFunc;
+
+    icTranslator->translate_MainFunc();
+
     this->check_Block(node->getLastChild(), true);
+
     if (!receiveReturn) {
         errorLog.insert({funcEndLineNum, errorType2string.find(ErrorType::ReturnMissing)->second});
     }
@@ -296,9 +308,7 @@ SymbolTableEntry *ErrorHandler::check_AddExp(Node *node, bool fromConstExp,
     auto *var2 = new ICItemVar(IS_GLOBAL);
     entry1 = this->check_AddExp(node->getFirstChild(), fromConstExp, &value1, var1);
     entry2 = this->check_MulExp(node->getLastChild(), fromConstExp, &value2, var2);
-    ICItemVar *ret = ((ICItemVar *) icItem);
-    ICEntryType op = icTranslator->symbol2binaryOp(node->getChildAt(1)->getToken()->symbol);
-    icTranslator->translate_BinaryOperator(op, ret, var1, var2);
+
     if (fromConstExp) {  // 必须为常量
         if (node->getChildAt(1)->is(Symbol::PLUS)) {
             *constExpValue = value1 + value2;
@@ -307,6 +317,11 @@ SymbolTableEntry *ErrorHandler::check_AddExp(Node *node, bool fromConstExp,
         }
         return nullptr;
     }
+
+    ICItemVar *ret = ((ICItemVar *) icItem);
+    ICEntryType op = icTranslator->symbol2binaryOp(node->getChildAt(1)->getToken()->symbol);
+    icTranslator->translate_BinaryOperator(op, ret, var1, var2);
+
     if (entry1 == nullptr || entry2 == nullptr) return nullptr;
     return entry1;
 }
@@ -317,7 +332,7 @@ void ErrorHandler::check_InitVal(Node *node, int d, ICItem *icItem) {
     if (IS_GLOBAL) {  // 全局变量，直接求出InitVal，这期间不用生成中间代码
         switch (d) {
             case 0: {
-                this->check_Exp(node->getFirstChild(), true, &temp, icItem);
+                this->check_Exp(node->getFirstChild(), true, &temp, nullptr);
                 ((ICItemImm *) icItem)->value = temp;
                 return;
             }
@@ -328,7 +343,7 @@ void ErrorHandler::check_InitVal(Node *node, int d, ICItem *icItem) {
                 icItemArray->length = length;
                 for (int i = 1, j = 0; i < node->getChildrenNum() - 1; i += 2) {
                     Node *exp = node->getChildAt(i)->getFirstChild();
-                    this->check_Exp(exp, true, &temp, icItem);
+                    this->check_Exp(exp, true, &temp, nullptr);
                     icItemArray->value[j++] = temp;
                 }
                 return;
@@ -343,7 +358,7 @@ void ErrorHandler::check_InitVal(Node *node, int d, ICItem *icItem) {
                 for (int i = 1; i < node->getChildrenNum() - 1; i += 2) {
                     for (int j = 1; j < node->getFirstChild()->getChildrenNum() - 1; j += 2) {
                         Node *exp = node->getChildAt(i)->getChildAt(j)->getFirstChild();
-                        this->check_Exp(exp, true, &temp, icItem);
+                        this->check_Exp(exp, true, &temp, nullptr);
                         icItemArray->value[k++] = temp;
                     }
                 }
@@ -434,9 +449,7 @@ SymbolTableEntry *ErrorHandler::check_MulExp(Node *node, bool fromConstExp,
     auto *var2 = new ICItemVar(IS_GLOBAL);
     entry1 = this->check_MulExp(node->getFirstChild(), fromConstExp, &value1, var1);
     entry2 = this->check_UnaryExp(node->getLastChild(), fromConstExp, &value2, var2);
-    ICItemVar *ret = ((ICItemVar *) icItem);
-    ICEntryType op = icTranslator->symbol2binaryOp(node->getChildAt(1)->getToken()->symbol);
-    icTranslator->translate_BinaryOperator(op, ret, var1, var2);
+
     if (fromConstExp) {  // 必须为常量
         if (node->getChildAt(1)->is(Symbol::MULT)) {
             *constExpValue = value1 * value2;
@@ -447,6 +460,11 @@ SymbolTableEntry *ErrorHandler::check_MulExp(Node *node, bool fromConstExp,
         }
         return nullptr;
     }
+
+    ICItemVar *ret = ((ICItemVar *) icItem);
+    ICEntryType op = icTranslator->symbol2binaryOp(node->getChildAt(1)->getToken()->symbol);
+    icTranslator->translate_BinaryOperator(op, ret, var1, var2);
+
     return entry1;
 }
 
@@ -491,15 +509,16 @@ SymbolTableEntry *ErrorHandler::check_UnaryExp(Node *node, bool fromConstExp,
                 *constExpValue = 0;
                 return nullptr;  // 出错了
             }
-            // TODO: TODO: 函数调用的中间代码生成 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            icTranslator->translate_FuncCall(definedEntry->getName());
         } else {  // 有实参
+            auto *params = new std::vector<ICItem *>;
             std::vector<SymbolTableEntry *> *calledEntry
-                    = this->check_FuncRParams(node->getChildAt(2), definedEntry);
+                    = this->check_FuncRParams(node->getChildAt(2), definedEntry, params);
             if (this->findParamError(definedEntry, calledEntry, firstChild->getToken()->lineNumber)) {
                 *constExpValue = 0;
                 return nullptr;  // 出错了
             }
-            // TODO: TODO: 函数调用的中间代码生成 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            icTranslator->translate_FuncCall(definedEntry->getName(), params);
         }
         auto *errorNode = dynamic_cast<ErrorNode *>(node->getLastChild());
         if (errorNode != nullptr) {
@@ -533,13 +552,15 @@ SymbolTableEntry *ErrorHandler::check_PrimaryExp(Node *node, bool fromConstExp,
 
 // FuncRParams → Exp { ',' Exp }
 std::vector<SymbolTableEntry *> *ErrorHandler::check_FuncRParams(
-        Node *node, SymbolTableEntry *entry) {
+        Node *node, SymbolTableEntry *entry, std::vector<ICItem *> *params) {
     SymbolTableEntry *retEntry = nullptr;
     auto *funcRParams = new std::vector<SymbolTableEntry *>();
     std::vector<Node *> *children = node->getAllChildren();
     int temp = 0;
     for (auto i = 0; i < children->size(); i += 2) {
-        retEntry = this->check_Exp(node->getChildAt(i), false, &temp);
+        auto *icItem = new ICItemVar(IS_GLOBAL);
+        retEntry = this->check_Exp(node->getChildAt(i), false, &temp, icItem);
+        params->push_back(icItem);
         if (retEntry != nullptr) {
             funcRParams->push_back(retEntry);
         } else {  // 函数实参为常数
@@ -605,9 +626,10 @@ SymbolTableEntry *ErrorHandler::check_LVal(Node *node, bool fromConstExp,
             assert(definedEntry->isConst());
             *constExpValue = definedEntry->varGet();
         }
-        assert(icItem->type == ICItemType::Var);
+        icItem->type = ICItemType::Reference;
         ICItem *existedItem = currentTable->getICItemByNameFromAllTables(ident);
-        icTranslator->translate_BinaryOperator(ICEntryType::Assign, icItem, existedItem);
+        icItem->reference = existedItem;
+//        icTranslator->translate_BinaryOperator(ICEntryType::Assign, icItem, existedItem);
         return definedEntry;
     } else if (size == 4 || size == 7) {  // ident[exp]  or  ident[exp][exp]
         // TODO: 没处理 LVal 为数组的情况，!!!!!!!!!!!!!!!!!
@@ -647,7 +669,9 @@ SymbolTableEntry *ErrorHandler::check_LVal(Node *node, bool fromConstExp,
             referencedEntry = new SymbolTableEntry(definedEntry,
                                                    SymbolTableEntryType::Var, v1, v2);
             Node *exp2 = node->getChildAt(5);
-            SymbolTableEntry *exp2Entry = this->check_Exp(exp2, fromConstExp, &v2);
+            // TODO:  TODO:  TODO:
+            auto *icItem2 = new ICItem();
+            SymbolTableEntry *exp2Entry = this->check_Exp(exp2, fromConstExp, &v2, icItem2);
             errorNode = dynamic_cast<ErrorNode *>(node->getChildAt(6));
             if (errorNode != nullptr) {
                 errorLog.insert({errorNode->lineNum, errorNode->error()});
@@ -679,8 +703,13 @@ SymbolTableEntry *ErrorHandler::check_Number(Node *node, bool fromConstExp,
 #endif
     *constExpValue = std::stoi(
             node->getFirstChild()->getToken()->value);
-    assert(icItem->type == ICItemType::Imm);
-    ((ICItemImm *) icItem)->value = *constExpValue;
+    if (icItem->type == ICItemType::Imm) {
+        ((ICItemImm *) icItem)->value = *constExpValue;
+    } else {
+        assert(icItem->type == ICItemType::Var);
+        ((ICItemVar *) icItem)->isConst = true;
+        ((ICItemVar *) icItem)->value = *constExpValue;
+    }
     return nullptr;
 }
 
@@ -787,16 +816,24 @@ void ErrorHandler::check_Stmt(Node *stmt, bool inFuncBlock) {
     if (first->is(GrammarItem::LVal)) {
         // Stmt → LVal '=' Exp ';'
         // Stmt → LVal '=' 'getint''('')'';'
-        SymbolTableEntry *firstEntry = this->check_LVal(first, false, &temp);
+        auto *lValICItem = new ICItem();
+        SymbolTableEntry *firstEntry = this->check_LVal(first, false, &temp, lValICItem);
+        ICItem *leftReferenceICItem = lValICItem->reference;
+
         if (firstEntry == nullptr) return;  // 名字未定义
         if (firstEntry->isConst()) {
             // 行号： LVal → Ident {'[' Exp ']'}
             errorLog.insert({first->getFirstChild()->getToken()->lineNumber,
                              errorType2string.find(ErrorType::ConstantModification)->second});
         }
+
         if (stmt->getChildAt(2)->is(GrammarItem::Exp)) {  // LVal '=' Exp ';'
-            this->check_Exp(stmt->getChildAt(-2), false, &temp);
+            ICItem *rightICItem = new ICItemVar(IS_GLOBAL);
+            this->check_Exp(stmt->getChildAt(-2), false, &temp, rightICItem);
+            icTranslator->translate_UnaryOperator(ICEntryType::Assign, leftReferenceICItem, rightICItem);
         } else {  // LVal '=' 'getint''('')'';'
+            icTranslator->translate_getint(leftReferenceICItem);
+
             auto *errorNode = dynamic_cast<ErrorNode *>(stmt->getChildAt(4));  // ErrorType::MissingRPARENT
             if (errorNode != nullptr) {
                 errorLog.insert({errorNode->lineNum, errorNode->error()});
@@ -814,7 +851,8 @@ void ErrorHandler::check_Stmt(Node *stmt, bool inFuncBlock) {
         currentTable = currentTable->parent;
     } else if (first->is(GrammarItem::Exp) || stmt->getChildrenNum() == 1) {  // Stmt → [Exp] ';'
         if (first->is(GrammarItem::Exp)) {
-            this->check_Exp(first, false, &temp);
+            auto *icItem = new ICItem();
+            this->check_Exp(first, false, &temp, icItem);
         }
         auto *errorNode = dynamic_cast<ErrorNode *>(last);
         if (errorNode != nullptr) {
@@ -857,7 +895,11 @@ void ErrorHandler::check_Stmt(Node *stmt, bool inFuncBlock) {
                              errorType2string.find(ErrorType::ReturnRedundant)->second});
         }
         if (stmt->getChildAt(1)->is(GrammarItem::Exp)) {
-            this->check_Exp(stmt->getChildAt(1), false, &temp);
+            ICItem *icItem = new ICItemVar(false);
+            this->check_Exp(stmt->getChildAt(1), false, &temp, icItem);
+            icTranslator->translate_return(icItem);
+        } else {
+            icTranslator->translate_return();
         }
         auto *errorNode = dynamic_cast<ErrorNode *>(last);  // ErrorType::MissingSEMICN
         if (errorNode != nullptr) {
@@ -867,18 +909,26 @@ void ErrorHandler::check_Stmt(Node *stmt, bool inFuncBlock) {
         // ErrorType::FormatStrNumNotMatch
         int leftNum = 0, rightNum = 0;
         Node *formatStr = stmt->getChildAt(2);
-        bool hasIllegalChar = ErrorHandler::check_FormatString(formatStr, &leftNum);
+        auto *indexOfPercentSign = new std::vector<int>;
+        auto *intItems = new std::vector<ICItem *>;
+        bool hasIllegalChar = ErrorHandler::check_FormatString(
+                formatStr, &leftNum, indexOfPercentSign);
         if (hasIllegalChar) {
             errorLog.insert({formatStr->getToken()->lineNumber,
                              errorType2string.find(ErrorType::IllegalChar)->second});
         }
         for (int i = 4; i < stmt->getChildrenNum() - 2; i += 2) {
             ++rightNum;
-            this->check_Exp(stmt->getChildAt(i), false, &temp);
+            ICItem *icItem = new ICItemVar(IS_GLOBAL);
+            this->check_Exp(stmt->getChildAt(i), false, &temp, icItem);
+            intItems->push_back(icItem);
         }
         if (leftNum != rightNum) {
             errorLog.insert({formatStr->getToken()->lineNumber,
                              errorType2string.find(ErrorType::FormatStrNumNotMatch)->second});
+        } else {
+            icTranslator->translate_printf(indexOfPercentSign,
+                                           intItems, &formatStr->getToken()->value);
         }
         auto *errorNode = dynamic_cast<ErrorNode *>(stmt->getChildAt(-2));  // ErrorType::MissingRPARENT
         if (errorNode != nullptr) {
@@ -897,10 +947,18 @@ void ErrorHandler::check_Cond(Node *node) {
     this->check_LOrExp(node->getFirstChild());
 }
 
-bool ErrorHandler::check_FormatString(Node *node, int *formatNum) {
+bool ErrorHandler::check_FormatString(Node *node, int *formatNum,
+                                      std::vector<int> *indexOfPercentSign) {
     *formatNum = 0;
     std::string s = node->getToken()->value;
     bool hasIllegalChar = false;
+    int cur = 1, index = 0;
+    while (cur < s.size() - 1) {
+        index = s.find('%', cur);
+        if (index > s.size()) break;
+        indexOfPercentSign->push_back(index);
+        cur = index + 2;
+    }
     for (int i = 1; i < s.size() - 1; ++i) {
         // check <FormatChar>
         auto now = s[i];
@@ -957,10 +1015,11 @@ void ErrorHandler::check_EqExp(Node *node) {
 // RelExp → AddExp | RelExp ('<' | '>' | '<=' | '>=') AddExp
 void ErrorHandler::check_RelExp(Node *node) {
     int temp = 0;
-    if (node->getChildrenNum() == 1) {
-        this->check_AddExp(node->getFirstChild(), false, &temp);
+    auto *icItem = new ICItem();
+    if (node->getChildrenNum() == 1) {  // TODO:
+        this->check_AddExp(node->getFirstChild(), false, &temp, icItem);
     } else {
-        this->check_RelExp(node->getFirstChild());
-        this->check_AddExp(node->getLastChild(), false, &temp);
+        this->check_RelExp(node->getFirstChild());  // todo:
+        this->check_AddExp(node->getLastChild(), false, &temp, icItem);
     }
 }

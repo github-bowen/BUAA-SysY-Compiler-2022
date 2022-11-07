@@ -146,28 +146,28 @@ void SymbolTableEntry::addParamForFuncEntry(SymbolTableEntry *param) {
     if (type == SymbolTableEntryType::FunctionOfInt) {
         if (param->type == SymbolTableEntryType::Var ||
             param->type == SymbolTableEntryType::VarConst) {  // 变量
-            functionOfInt->addVarParam();
+            functionOfInt->addVarParam(param->getName());
         }
         if (param->type == SymbolTableEntryType::Array1 ||
             param->type == SymbolTableEntryType::Array1Const) {  // 一维数组
-            functionOfInt->addArray1Param();
+            functionOfInt->addArray1Param(param->getName());
         }
         if (param->type == SymbolTableEntryType::Array2 ||
             param->type == SymbolTableEntryType::Array2Const) {  // 一维数组
-            functionOfInt->addArray2Param(param->getD2ForArray2());
+            functionOfInt->addArray2Param(param->getName(), param->getD2ForArray2());
         }
     } else {
         if (param->type == SymbolTableEntryType::Var ||
             param->type == SymbolTableEntryType::VarConst) {  // 变量
-            functionOfVoid->addVarParam();
+            functionOfVoid->addVarParam(param->getName());
         }
         if (param->type == SymbolTableEntryType::Array1 ||
             param->type == SymbolTableEntryType::Array1Const) {  // 一维数组
-            functionOfVoid->addArray1Param();
+            functionOfVoid->addArray1Param(param->getName());
         }
         if (param->type == SymbolTableEntryType::Array2 ||
             param->type == SymbolTableEntryType::Array2Const) {  // 一维数组
-            functionOfVoid->addArray2Param(param->getD2ForArray2());
+            functionOfVoid->addArray2Param(param->getName(), param->getD2ForArray2());
         }
     }
 }

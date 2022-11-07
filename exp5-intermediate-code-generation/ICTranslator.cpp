@@ -2,6 +2,8 @@
 
 #include "_debug.h"
 
+extern std::ofstream icOutput;
+
 ICTranslator *ICTranslator::self = nullptr;
 
 ICTranslator *ICTranslator::getInstance() {
@@ -12,12 +14,18 @@ ICTranslator *ICTranslator::getInstance() {
 }
 
 ICTranslator::ICTranslator() {
-    icEntries = new std::vector<ICEntry *>;
+    mainEntries = new std::vector<ICEntry *>;
+    id2allPureString = new std::map<int, std::string *>;
+    name2icItemFunc = new std::map<std::string *, ICItemFunc *>;
+    currentFunc = nullptr;
 }
 
 ICTranslator::~ICTranslator() {
-    for (const auto *pItem: *icEntries) delete pItem;
-    delete icEntries;
+    for (const auto *pItem: *mainEntries) delete pItem;
+    delete mainEntries;
+    for (const auto &i: *id2allPureString) delete i.second;
+    delete id2allPureString;
+    delete currentFunc;
 }
 
 void ICTranslator::translate_ConstVarDef(bool isGlobal, SymbolTableEntry *tableEntry,
@@ -25,10 +33,14 @@ void ICTranslator::translate_ConstVarDef(bool isGlobal, SymbolTableEntry *tableE
     auto *icItemVar = new ICItemVar(tableEntry->getName(), tableEntry,
                                     true, isGlobal, tableEntry->varGet());
     currentTable->addICItem(*icItemVar->originalName, icItemVar);
-
     auto *icEntry = new ICEntry(ICEntryType::ConstVarDefine, icItemVar);
 
-    icEntries->push_back(icEntry);
+    if (currentFunc == nullptr) {
+        mainEntries->push_back(icEntry);
+    } else {
+        currentFunc->entries->push_back(icEntry);
+    }
+
 }
 
 void ICTranslator::translate_ConstArray1Def(bool isGlobal, SymbolTableEntry *tableEntry, int d1,
@@ -38,7 +50,12 @@ void ICTranslator::translate_ConstArray1Def(bool isGlobal, SymbolTableEntry *tab
     currentTable->addICItem(*icItemArray->originalName, icItemArray);
 
     auto *icEntry = new ICEntry(ICEntryType::ConstArrayDefine, icItemArray);
-    icEntries->push_back(icEntry);
+
+    if (currentFunc == nullptr) {
+        mainEntries->push_back(icEntry);
+    } else {
+        currentFunc->entries->push_back(icEntry);
+    }
 }
 
 void ICTranslator::translate_ConstArray2Def(bool isGlobal, SymbolTableEntry *tableEntry,
@@ -58,7 +75,12 @@ void ICTranslator::translate_ConstArray2Def(bool isGlobal, SymbolTableEntry *tab
     currentTable->addICItem(*icItemArray->originalName, icItemArray);
 
     auto *icEntry = new ICEntry(ICEntryType::ConstArrayDefine, icItemArray);
-    icEntries->push_back(icEntry);
+
+    if (currentFunc == nullptr) {
+        mainEntries->push_back(icEntry);
+    } else {
+        currentFunc->entries->push_back(icEntry);
+    }
 }
 
 void ICTranslator::translate_VarDef(ICItem *initItem, bool isGlobal,
@@ -84,7 +106,12 @@ void ICTranslator::translate_VarDef(ICItem *initItem, bool isGlobal,
             icEntry = new ICEntry(ICEntryType::VarDefine, icItemVar);
         }
     }
-    icEntries->push_back(icEntry);
+
+    if (currentFunc == nullptr) {
+        mainEntries->push_back(icEntry);
+    } else {
+        currentFunc->entries->push_back(icEntry);
+    }
 }
 
 void ICTranslator::translate_ArrayDef(ICItem *initItem, bool isGlobal,
@@ -110,7 +137,12 @@ void ICTranslator::translate_ArrayDef(ICItem *initItem, bool isGlobal,
             icEntry = new ICEntry(ICEntryType::VarDefine, icItemArray);
         }
     }
-    icEntries->push_back(icEntry);
+
+    if (currentFunc == nullptr) {
+        mainEntries->push_back(icEntry);
+    } else {
+        currentFunc->entries->push_back(icEntry);
+    }
 }
 
 /**
@@ -122,10 +154,18 @@ void ICTranslator::translate_ArrayDef(ICItem *initItem, bool isGlobal,
  */
 void ICTranslator::translate_BinaryOperator(ICEntryType icEntryType,
                                             ICItem *dst, ICItem *src1, ICItem *src2) const {
-    if (icEntryType == ICEntryType::Assign) {
-        icEntries->push_back(new ICEntry(icEntryType, dst, src1));
+    if (currentFunc == nullptr) {
+        if (icEntryType == ICEntryType::Assign) {
+            mainEntries->push_back(new ICEntry(icEntryType, dst, src1));
+        } else {
+            mainEntries->push_back(new ICEntry(icEntryType, dst, src1, src2));
+        }
     } else {
-        icEntries->push_back(new ICEntry(icEntryType, dst, src1, src2));
+        if (icEntryType == ICEntryType::Assign) {
+            currentFunc->entries->push_back(new ICEntry(icEntryType, dst, src1));
+        } else {
+            currentFunc->entries->push_back(new ICEntry(icEntryType, dst, src1, src2));
+        }
     }
 }
 
@@ -140,11 +180,99 @@ ICEntryType ICTranslator::symbol2binaryOp(Symbol symbol) const {
  * @param src
  */
 void ICTranslator::translate_UnaryOperator(ICEntryType icEntryType, ICItem *dst, ICItem *src) const {
-    icEntries->push_back(new ICEntry(icEntryType, dst, src));
+    if (currentFunc == nullptr) {
+        mainEntries->push_back(new ICEntry(icEntryType, dst, src));
+    } else {
+        currentFunc->entries->push_back(new ICEntry(icEntryType, dst, src));
+    }
 }
 
 ICEntryType ICTranslator::symbol2unaryOp(Symbol symbol) const {
     return _symbol2unaryOp.find(symbol)->second;
 }
 
+void ICTranslator::translate_getint(ICItem *dst) const {
+    if (currentFunc == nullptr) {
+        mainEntries->push_back(new ICEntry(ICEntryType::Getint, dst));
+    } else {
+        currentFunc->entries->push_back(new ICEntry(ICEntryType::Getint, dst));
+    }
+}
+
+void ICTranslator::translate_printf(std::vector<int> *indexOfPercentSign,
+                                    std::vector<ICItem *> *intItems,
+                                    std::string *s) const {
+    auto *icItemString = new ICItemString();
+    int start = 1, len, intPos = 0;
+    for (const int cur: *indexOfPercentSign) {
+        len = cur - start;
+        if (len > 0) {
+            auto *substring = new std::string(s->substr(start, len));
+            icItemString->addStringItem(substring);
+        }
+        start = cur + 2;
+        icItemString->addIntItem(intItems->at(intPos++));
+    }
+    // 没有%d; 最后一个%d后的字符串
+    if (indexOfPercentSign->empty()) {
+        auto *substring = new std::string(s->substr(1, s->size() - 2));
+        icItemString->addStringItem(substring);
+    } else if (indexOfPercentSign->back() + 2 < s->size() - 1) {
+        len = s->size() - 1 - (indexOfPercentSign->back() + 2);
+        auto *substring = new std::string(s->substr(indexOfPercentSign->back() + 2, len));
+        icItemString->addStringItem(substring);
+    }
+    // 加入全局记录字符串
+    for (const auto &item: *(icItemString->id2pureString)) {
+        id2allPureString->insert(item);
+    }
+    // 记录printf操作
+    if (currentFunc == nullptr) {
+        mainEntries->push_back(new ICEntry(ICEntryType::Print, icItemString));
+    } else {
+        currentFunc->entries->push_back(new ICEntry(ICEntryType::Print, icItemString));
+    }
+}
+
+ICItemFunc *ICTranslator::translate_FuncDef(SymbolTableEntry *funcEntry) const {
+    auto *func = new ICItemFunc(funcEntry);
+    name2icItemFunc->insert({funcEntry->getName(), func});
+    return func;
+}
+
+
+void ICTranslator::translate_FuncCall(std::string *funcName, std::vector<ICItem *> *params) {
+    ICItemFunc *calledFunc = name2icItemFunc->find(funcName)->second;
+    if (currentFunc != nullptr) {
+        currentFunc->entries->push_back(new ICEntry(calledFunc, params));
+    } else {
+        mainEntries->push_back(new ICEntry(calledFunc, params));
+    }
+
+}
+
+void ICTranslator::translate_return(ICItem *icItem) const {
+    if (currentFunc != nullptr) {
+        currentFunc->entries->push_back(new ICEntry(ICEntryType::FuncReturnWithValue, icItem));
+    } else {
+        mainEntries->push_back(new ICEntry(ICEntryType::MainFuncEnd));
+    }
+}
+
+void ICTranslator::translate_return() const {
+    if (currentFunc != nullptr) {
+        currentFunc->entries->push_back(new ICEntry(ICEntryType::FuncReturn));
+    } else {
+        mainEntries->push_back(new ICEntry(ICEntryType::MainFuncEnd));
+    }
+}
+
+void ICTranslator::output() {
+
+}
+
+void ICTranslator::translate_MainFunc() const {
+    assert(currentFunc == nullptr);
+    mainEntries->push_back(new ICEntry(ICEntryType::MainFuncStart));
+}
 

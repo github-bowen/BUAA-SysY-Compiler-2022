@@ -25,18 +25,18 @@ public:
         delete params;
     }
 
-    void addVarParam() {
-        auto *param = new FuncParam(0);
+    void addVarParam(std::string *name) {
+        auto *param = new FuncParam(name, 0);
         params->push_back(param);
     }
 
-    void addArray1Param() {
-        auto *param = new FuncParam(1);
+    void addArray1Param(std::string *name) {
+        auto *param = new FuncParam(name, 1);
         params->push_back(param);
     }
 
-    void addArray2Param(int d2) {
-        auto *param = new FuncParam(2, d2);
+    void addArray2Param(std::string *name, int d2) {
+        auto *param = new FuncParam(name, 2, d2);
         params->push_back(param);
     }
 };

@@ -14,6 +14,10 @@ public:
 
     ICItemLabel() : ICItem(ICItemType::Label), labelId(generateLabelId()) {}
 
+    std::string toString() const {
+        return "Label_" + std::to_string(labelId);
+    }
+
 };
 
 #endif //IC_ITEM_LABEL_H

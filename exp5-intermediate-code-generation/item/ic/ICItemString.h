@@ -7,12 +7,12 @@
 #include "ICItemVar.h"
 
 class ICItemString : public ICItem {
-private:
-    class InnerType {
+public:
+    class StrItem {
     public:
         const bool isString;
         const std::string *stringItem;
-        const ICItemVar *intItem;
+        const ICItem *intItem;
         const int pureStringId;
 
         static int generatePureStringId(bool isString) {
@@ -20,23 +20,21 @@ private:
             return ++pureStringId;
         }
 
-        InnerType(const bool isString, const std::string *stringItem, const ICItemVar *intItem)
+        StrItem(const bool isString, const std::string *stringItem, const ICItem *intItem)
                 : isString(isString), stringItem(stringItem),
                   intItem(intItem), pureStringId(generatePureStringId(isString)) {}
 
-        ~InnerType() {
+        ~StrItem() {
             delete stringItem;
             delete intItem;
         }
     };
 
-
-public:
-    std::vector<InnerType *> *stringItems;
+    std::vector<StrItem *> *stringItems;
     std::map<int, std::string *> *id2pureString;
 
     ICItemString() : ICItem(ICItemType::String) {
-        stringItems = new std::vector<InnerType *>;
+        stringItems = new std::vector<StrItem *>;
         id2pureString = new std::map<int, std::string *>;
     }
 
@@ -47,8 +45,8 @@ public:
         delete id2pureString;
     }
 
-    void addIntItem(ICItemVar *intItem) {
-        auto *intType = new InnerType(false, nullptr, intItem);
+    void addIntItem(ICItem *intItem) const {
+        auto *intType = new StrItem(false, nullptr, intItem);
         stringItems->push_back(intType);
     }
 
@@ -56,8 +54,8 @@ public:
      * @param s
      * @return pureStringId
      */
-    int addStringItem(std::string *s) {
-        auto *stringItem = new InnerType(true, s, nullptr);
+    int addStringItem(std::string *s) const {
+        auto *stringItem = new StrItem(true, s, nullptr);
         stringItems->push_back(stringItem);
         id2pureString->insert({stringItem->pureStringId, s});
         return stringItem->pureStringId;

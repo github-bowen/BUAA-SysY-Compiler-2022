@@ -63,3 +63,7 @@ ICItemArray::~ICItemArray() {
     for (const auto *pItem: *itemsToInitArray) delete pItem;
     delete itemsToInitArray;
 }
+
+std::string ICItemArray::toString() const {
+    return std::__cxx11::string();
+}

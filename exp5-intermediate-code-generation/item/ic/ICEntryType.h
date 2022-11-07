@@ -11,10 +11,14 @@ enum class ICEntryType {
 
     FuncDefine,
     FuncCall,
+    FuncReturnWithValue,
+    FuncReturn,
+
+    MainFuncStart,
+    MainFuncEnd,
 
     Getint,
-    PrintInt,
-    PrintStr,
+    Print,
     Assign,
     Add,
     Sub,

@@ -15,8 +15,6 @@ public:
 
     explicit ErrorHandler(Node *);
 
-    bool IS_GLOBAL() const;
-
     void check();
 
     void check_CompUnit(Node *node);
@@ -53,8 +51,8 @@ public:
 
     SymbolTableEntry *check_Number(Node *node, bool fromConstExp, int *constExpValue, ICItem *icItem);
 
-    std::vector<SymbolTableEntry *> *check_FuncRParams(Node *node,
-                                                       SymbolTableEntry *entry);
+    std::vector<SymbolTableEntry *> *
+    check_FuncRParams(Node *node, SymbolTableEntry *entry, std::vector<ICItem *> *params);
 
     void check_FuncFParams(Node *funcFParams,
                            SymbolTableEntry *funcIdentEntry);
@@ -83,7 +81,7 @@ public:
 
     void check_VarDef(Node *node);
 
-    static bool check_FormatString(Node *node, int *formatNum);
+    static bool check_FormatString(Node *node, int *formatNum, std::vector<int> *);
 };
 
 

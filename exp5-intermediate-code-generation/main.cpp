@@ -6,16 +6,24 @@
 #include "exceptions/FileIOError.h"
 #include "ErrorHandler.h"
 #include "ICTranslator.h"
+#include "MipsTranslator.h"
 
 //#define STAGE_GRAMMAR_ANALYSIS
-#define STAGE_ERROR_HANDLING
+//#define STAGE_ERROR_HANDLING
+//#define STAGE_INTERMEDIATE_CODE
+#define STAGE_MIPS
 
-std::ifstream input("../testfile.txt");  // TODO: 修改路径 ../
-std::ofstream normalOutput("../output.txt");  // TODO: 修改路径 ../
-std::ofstream errorOutput("../error.txt");  // TODO: 修改路径 ../
+static const std::string pre = "./";  // TODO: 修改路径 ../
+
+std::ifstream input(pre + "testfile.txt");
+std::ofstream normalOutput(pre + "output.txt");
+std::ofstream errorOutput(pre + "error.txt");
+std::ofstream icOutput(pre + "ic_output.txt");
+std::ofstream mipsOutput(pre + "mips.txt");
+
 std::map<int, std::string> errorLog;
 
-void grammarItemOutput(Node *cur) {
+static void grammarItemOutput(Node *cur) {
     if (!cur->isLeaf) {
         for (auto node: *(cur->getAllChildren())) {
             grammarItemOutput(node);
@@ -51,6 +59,7 @@ int main() {
     // error handler 错误处理器
     auto *errorHandler = new ErrorHandler(root);
     errorHandler->check();
+    ICTranslator *icTranslator = errorHandler->icTranslator;
 
 #ifdef STAGE_ERROR_HANDLING
     auto it = errorLog.begin();
@@ -61,9 +70,15 @@ int main() {
     errorOutput << std::flush;
 #endif
 
-//    // intermediate code translator 中间代码生成器
-//    auto *icTranslator = new ICTranslator(root, errorHandler->rootTable);
-//    icTranslator->translate();
+#ifdef STAGE_INTERMEDIATE_CODE
+    icTranslator->output();
+#endif
+
+    auto *mipsTranslator = new MipsTranslator(icTranslator);
+
+#ifdef STAGE_MIPS
+    mipsTranslator->translate();
+#endif
 
     input.close();
     normalOutput.close();
