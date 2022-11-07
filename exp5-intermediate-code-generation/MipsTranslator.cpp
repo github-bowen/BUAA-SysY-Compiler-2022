@@ -146,8 +146,13 @@ void MipsTranslator::translate() {
             }
             case ICEntryType::Assign: {
                 auto *left = (ICItemVar *) op1, *right = (ICItemVar *) op2;
-                lw(Reg::$t0, right);
-                sw(Reg::$t0, left);
+                if (right == nullptr) {
+                    // 从函数返回后赋值
+                    sw(Reg::$v0, left);
+                } else {
+                    lw(Reg::$t0, right);
+                    sw(Reg::$t0, left);
+                }
                 break;
             }
             case ICEntryType::Add: {
@@ -374,8 +379,13 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
             }
             case ICEntryType::Assign: {
                 auto *left = (ICItemVar *) op1, *right = (ICItemVar *) op2;
-                lw(Reg::$t0, right);
-                sw(Reg::$t0, left);
+                if (right == nullptr) {
+                    // 从函数返回后赋值
+                    sw(Reg::$v0, left);
+                } else {
+                    lw(Reg::$t0, right);
+                    sw(Reg::$t0, left);
+                }
                 break;
             }
             case ICEntryType::Add: {

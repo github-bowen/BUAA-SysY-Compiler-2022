@@ -520,6 +520,10 @@ SymbolTableEntry *ErrorHandler::check_UnaryExp(Node *node, bool fromConstExp,
             }
             icTranslator->translate_FuncCall(definedEntry->getName(), params);
         }
+        if (icItem != nullptr) {
+            ICItemVar *dstICItem = ((ICItemVar *) icItem);
+            icTranslator->translate_BinaryOperator(ICEntryType::Assign, dstICItem, nullptr);
+        }
         auto *errorNode = dynamic_cast<ErrorNode *>(node->getLastChild());
         if (errorNode != nullptr) {
             errorLog.insert({errorNode->lineNum, errorNode->error()});
