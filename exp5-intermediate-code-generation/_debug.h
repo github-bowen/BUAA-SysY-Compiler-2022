@@ -1,7 +1,7 @@
 #ifndef GENERAL_DEBUG_SWITCH
 #define GENERAL_DEBUG_SWITCH
 
-//#define NDEBUG
+#define NDEBUG
 #include <cassert>
 
 //#define PARSER_DEBUG  // Parser.cpp

@@ -48,7 +48,7 @@ int ICItemVar::generateTempVarId() {
 
 std::string ICItemVar::toString() const{
     if (isTemp) {
-        return "temp_var" + std::to_string(tempVarId);
+        return "temp_var" + std::to_string(abs(tempVarId));
     } else {
         if (isGlobal) {
             if (isConst) {

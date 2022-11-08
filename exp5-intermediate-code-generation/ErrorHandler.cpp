@@ -859,8 +859,8 @@ void ErrorHandler::check_Stmt(Node *stmt, bool inFuncBlock) {
         currentTable = currentTable->parent;
     } else if (first->is(GrammarItem::Exp) || stmt->getChildrenNum() == 1) {  // Stmt → [Exp] ';'
         if (first->is(GrammarItem::Exp)) {
-            auto *icItem = new ICItem();
-            this->check_Exp(first, false, &temp, icItem);
+//            auto *icItem = new ICItem();
+            this->check_Exp(first, false, &temp, nullptr);
         }
         auto *errorNode = dynamic_cast<ErrorNode *>(last);
         if (errorNode != nullptr) {

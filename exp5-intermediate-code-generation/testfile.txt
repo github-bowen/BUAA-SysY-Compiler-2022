@@ -1,10 +1,29 @@
-int f() {
-    return 1;
+const int a = 1;
+int d = 1;
+int fk() {
+    d = 10;
+    return d + 1;
 }
-
+int pm(int z, int x) {
+    return z + x;
+}
+void mp(int a) {
+    a = a + 1;
+    return;
+}
 int main() {
-    int a = 0;
-    a = f();
-    printf("%d", a);
+    printf("Author: 19376160\n");
+    d = 1 + 4 * (3 - 2) % 3;
+    int b = 2;
+    int c, e;
+    c = b + a;
+    d = fk();
+    b = pm(b, a);
+    mp(d);
+    printf("%d\n", a);
+    printf("%d\n", b);
+    printf("%d\n", c);
+    printf("%d\n", d);
+    printf("The end");
     return 0;
 }

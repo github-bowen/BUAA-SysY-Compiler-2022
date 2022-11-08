@@ -59,7 +59,7 @@ void MipsTranslator::translate() {
     // 全局变量、常量
     while (mainStream->at(i)->entryType != ICEntryType::MainFuncStart) {
         ICEntry *defEntry = mainStream->at(i);
-        assert(defEntry->isGlobalVarOrConstDef());
+//        assert(defEntry->isGlobalVarOrConstDef());
         translate_GlobalVarOrArrayDef(defEntry);
         i++;
     }
@@ -611,7 +611,6 @@ void MipsTranslator::lw(Reg dst, int offset, Reg base) {
 
 void MipsTranslator::sw(Reg reg, ICItemVar *var) {
     int addr;
-    mipsOutput << std::flush;
     ICItem *item = var;
     if (item->reference != nullptr) {
         while (item->reference != nullptr) {
