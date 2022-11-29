@@ -749,7 +749,7 @@ void MipsTranslator::mul(Reg rd, Reg rs, Reg rt) {
 }
 
 void MipsTranslator::divu(Reg rs, Reg rt) {
-    mipsOutput << "mul " + reg2s.find(rs)->second <<
+    mipsOutput << "divu " + reg2s.find(rs)->second <<
                ", " << reg2s.find(rt)->second << "\n";
 }
 

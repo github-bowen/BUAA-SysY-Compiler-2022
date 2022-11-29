@@ -1,0 +1,256 @@
+.data 0x10010000
+temp:  .space  160000
+
+
+# a
+global_const_var1:  .word  1
+
+#d
+global_var2: .word  1
+
+# string tokens: 
+str_1:  .asciiz   "Author: 19376160\n"
+str_3:  .asciiz   "\n"
+str_5:  .asciiz   "\n"
+str_7:  .asciiz   "\n"
+str_9:  .asciiz   "\n"
+str_10:  .asciiz   "The end"
+
+
+.text 0x00400000
+
+# main function
+la $a0, str_1
+li $v0, 4
+syscall
+li $t0, 1
+sw $t0, 268500992($0)
+li $t0, 4
+lw $t1, 268500992($0)
+mul $t2, $t0, $t1
+sw $t2, 268500996($0)
+lw $t0, 268500996($0)
+li $t1, 3
+divu $t0, $t1
+mfhi $t2
+sw $t2, 268501000($0)
+li $t0, 1
+lw $t1, 268501000($0)
+addu $t2, $t0, $t1
+sw $t2, 268501004($0)
+lw $t0, 268501004($0)
+la $t9, global_var2
+sw $t0, 0($t9)
+li $t0, 2
+sw $t0, 268501008($0)
+lw $t0, 268501008($0)
+la $t1, global_const_var1
+lw $t1, 0($t1)
+addu $t2, $t0, $t1
+sw $t2, 268501020($0)
+lw $t0, 268501020($0)
+sw $t0, 268501012($0)
+
+
+# store temp regs
+addi $sp, $sp, -44
+sw $t0, 0($sp)
+sw $t1, 4($sp)
+sw $t2, 8($sp)
+sw $t3, 12($sp)
+sw $t4, 16($sp)
+sw $t5, 20($sp)
+sw $t6, 24($sp)
+sw $t7, 28($sp)
+sw $t8, 32($sp)
+sw $t9, 36($sp)
+sw $ra, 40($sp)
+jal Label_1
+
+
+# recover temp regs
+lw $t0, 0($sp)
+lw $t1, 4($sp)
+lw $t2, 8($sp)
+lw $t3, 12($sp)
+lw $t4, 16($sp)
+lw $t5, 20($sp)
+lw $t6, 24($sp)
+lw $t7, 28($sp)
+lw $t8, 32($sp)
+lw $t9, 36($sp)
+lw $ra, 40($sp)
+addi $sp, $sp, 44
+
+
+sw $v0, 268501024($0)
+lw $t0, 268501024($0)
+la $t9, global_var2
+sw $t0, 0($t9)
+
+
+# store temp regs
+addi $sp, $sp, -44
+sw $t0, 0($sp)
+sw $t1, 4($sp)
+sw $t2, 8($sp)
+sw $t3, 12($sp)
+sw $t4, 16($sp)
+sw $t5, 20($sp)
+sw $t6, 24($sp)
+sw $t7, 28($sp)
+sw $t8, 32($sp)
+sw $t9, 36($sp)
+sw $ra, 40($sp)
+
+
+# store funcrtion params
+addi $sp, $sp, -8
+lw $t0, 268501008($0)
+sw $t0, 0($sp)
+la $t0, global_const_var1
+lw $t0, 0($t0)
+sw $t0, 4($sp)
+
+
+jal Label_2
+addi $sp, $sp, 8
+
+
+# recover temp regs
+lw $t0, 0($sp)
+lw $t1, 4($sp)
+lw $t2, 8($sp)
+lw $t3, 12($sp)
+lw $t4, 16($sp)
+lw $t5, 20($sp)
+lw $t6, 24($sp)
+lw $t7, 28($sp)
+lw $t8, 32($sp)
+lw $t9, 36($sp)
+lw $ra, 40($sp)
+addi $sp, $sp, 44
+
+
+sw $v0, 268501028($0)
+lw $t0, 268501028($0)
+sw $t0, 268501008($0)
+
+
+# store temp regs
+addi $sp, $sp, -44
+sw $t0, 0($sp)
+sw $t1, 4($sp)
+sw $t2, 8($sp)
+sw $t3, 12($sp)
+sw $t4, 16($sp)
+sw $t5, 20($sp)
+sw $t6, 24($sp)
+sw $t7, 28($sp)
+sw $t8, 32($sp)
+sw $t9, 36($sp)
+sw $ra, 40($sp)
+
+
+# store funcrtion params
+addi $sp, $sp, -4
+la $t0, global_var2
+lw $t0, 0($t0)
+sw $t0, 0($sp)
+
+
+jal Label_3
+addi $sp, $sp, 4
+
+
+# recover temp regs
+lw $t0, 0($sp)
+lw $t1, 4($sp)
+lw $t2, 8($sp)
+lw $t3, 12($sp)
+lw $t4, 16($sp)
+lw $t5, 20($sp)
+lw $t6, 24($sp)
+lw $t7, 28($sp)
+lw $t8, 32($sp)
+lw $t9, 36($sp)
+lw $ra, 40($sp)
+addi $sp, $sp, 44
+
+
+la $a0, global_const_var1
+lw $a0, 0($a0)
+li $v0, 1
+syscall
+la $a0, str_3
+li $v0, 4
+syscall
+lw $a0, 268501008($0)
+li $v0, 1
+syscall
+la $a0, str_5
+li $v0, 4
+syscall
+lw $a0, 268501012($0)
+li $v0, 1
+syscall
+la $a0, str_7
+li $v0, 4
+syscall
+la $a0, global_var2
+lw $a0, 0($a0)
+li $v0, 1
+syscall
+la $a0, str_9
+li $v0, 4
+syscall
+la $a0, str_10
+li $v0, 4
+syscall
+
+li $v0, 10
+syscall
+
+
+
+
+# self defined functions
+
+Label_1:
+
+li $t0, 10
+la $t9, global_var2
+sw $t0, 0($t9)
+la $t0, global_var2
+lw $t0, 0($t0)
+li $t1, 1
+addu $t2, $t0, $t1
+sw $t2, 268501032($0)
+lw $v0, 268501032($0)
+jr $ra
+
+
+
+Label_2:
+
+lw $t0, 0($sp)
+lw $t1, 4($sp)
+addu $t2, $t0, $t1
+sw $t2, 268501036($0)
+lw $v0, 268501036($0)
+jr $ra
+
+
+
+Label_3:
+
+lw $t0, 0($sp)
+li $t1, 1
+addu $t2, $t0, $t1
+sw $t2, 268501040($0)
+lw $t0, 268501040($0)
+sw $t0, 0($sp)
+jr $ra
+
+
+
