@@ -65,5 +65,25 @@ ICItemArray::~ICItemArray() {
 }
 
 std::string ICItemArray::toString() const {
-    return std::__cxx11::string();
+    if (isTemp) {
+        return "temp_arr" + std::to_string(abs(tempArrayId));
+    } else {
+        if (isGlobal) {
+            if (isConst) {
+                return "global_const_arr" + std::to_string(abs(arrayId));
+            } else {
+                return "global_arr" + std::to_string(abs(arrayId));
+            }
+        } else {
+            if (isConst) {
+                return "local_const_arr" + std::to_string(abs(arrayId));
+            } else {
+                return "local_arr" + std::to_string(abs(arrayId));
+            }
+        }
+    }
+}
+
+void ICItemArray::setOriginType(int d, int length1, int length2) {
+    originType = OriginType(d, length1, length2);
 }

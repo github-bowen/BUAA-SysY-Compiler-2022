@@ -15,6 +15,8 @@ public:
 
     explicit ErrorHandler(Node *);
 
+    static bool checkErrorNode(Node *node);
+
     void check();
 
     void check_CompUnit(Node *node);

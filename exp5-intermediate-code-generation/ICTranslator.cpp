@@ -47,6 +47,7 @@ void ICTranslator::translate_ConstArray1Def(bool isGlobal, SymbolTableEntry *tab
                                             SymbolTable *currentTable) const {
     auto *icItemArray = new ICItemArray(tableEntry->getName(), tableEntry, isGlobal, true, d1,
                                         tableEntry->array1ConstGetAll());
+    icItemArray->setOriginType(1, d1, -1);
     currentTable->addICItem(*icItemArray->originalName, icItemArray);
 
     auto *icEntry = new ICEntry(ICEntryType::ConstArrayDefine, icItemArray);
@@ -72,6 +73,7 @@ void ICTranslator::translate_ConstArray2Def(bool isGlobal, SymbolTableEntry *tab
 
     auto *icItemArray = new ICItemArray(tableEntry->getName(), tableEntry, isGlobal,
                                         true, d1 * d2, newArray);
+    icItemArray->setOriginType(2, d1, d2);
     currentTable->addICItem(*icItemArray->originalName, icItemArray);
 
     auto *icEntry = new ICEntry(ICEntryType::ConstArrayDefine, icItemArray);
@@ -114,27 +116,63 @@ void ICTranslator::translate_VarDef(ICItem *initItem, bool isGlobal,
     }
 }
 
-void ICTranslator::translate_ArrayDef(ICItem *initItem, bool isGlobal,
-                                      SymbolTableEntry *tableEntry, bool hasInitVal, int length,
-                                      SymbolTable *currentTable) const {
+void ICTranslator::translate_Array1Def(ICItem *initItem, bool isGlobal, SymbolTableEntry *tableEntry,
+                                       bool hasInitVal, int length, SymbolTable *currentTable) const {
     ICEntry *icEntry;
     auto *initArray = ((ICItemArray *) initItem);
 
     if (isGlobal) {
         auto *icItemArray = new ICItemArray(tableEntry->getName(), tableEntry, true,
                                             false, length, initArray->value);
+        icItemArray->setOriginType(1, length, -1);
         currentTable->addICItem(*icItemArray->originalName, icItemArray);
 
         icEntry = new ICEntry(ICEntryType::ArrayDefine, icItemArray);
     } else {
         auto *icItemArray = new ICItemArray(tableEntry->getName(), tableEntry, false,
                                             false, length);
+        icItemArray->setOriginType(1, length, -1);
         currentTable->addICItem(*icItemArray->originalName, icItemArray);
 
         if (hasInitVal) {
             icEntry = new ICEntry(ICEntryType::ArrayDefine, icItemArray, initArray);
         } else {
-            icEntry = new ICEntry(ICEntryType::VarDefine, icItemArray);
+            icEntry = new ICEntry(ICEntryType::ArrayDefine, icItemArray);
+        }
+    }
+
+    if (currentFunc == nullptr) {
+        mainEntries->push_back(icEntry);
+    } else {
+        currentFunc->entries->push_back(icEntry);
+    }
+}
+
+void ICTranslator::translate_Array2Def(ICItem *initItem, bool isGlobal,
+                                       SymbolTableEntry *tableEntry,
+                                       bool hasInitVal, int d1, int d2,
+                                       SymbolTable *currentTable) const {
+    ICEntry *icEntry;
+    auto *initArray = ((ICItemArray *) initItem);
+    const int length = d1 * d2;
+
+    if (isGlobal) {
+        auto *icItemArray = new ICItemArray(tableEntry->getName(), tableEntry, true,
+                                            false, length, initArray->value);
+        icItemArray->setOriginType(2, d1, d2);
+        currentTable->addICItem(*icItemArray->originalName, icItemArray);
+
+        icEntry = new ICEntry(ICEntryType::ArrayDefine, icItemArray);
+    } else {
+        auto *icItemArray = new ICItemArray(tableEntry->getName(), tableEntry, false,
+                                            false, length);
+        icItemArray->setOriginType(2, d1, d2);
+        currentTable->addICItem(*icItemArray->originalName, icItemArray);
+
+        if (hasInitVal) {
+            icEntry = new ICEntry(ICEntryType::ArrayDefine, icItemArray, initArray);
+        } else {
+            icEntry = new ICEntry(ICEntryType::ArrayDefine, icItemArray);
         }
     }
 
@@ -238,9 +276,9 @@ ICItemFunc *ICTranslator::translate_FuncDef(SymbolTableEntry *funcEntry,
                                             SymbolTable *currentTable) const {
     auto *func = new ICItemFunc(funcEntry);
     name2icItemFunc->insert({funcEntry->getName(), func});
-    for (const auto *p : *(func->params)) {
+    for (const auto *p: *(func->params)) {
         // TODO: 假设都是变量
-        auto *var = (ICItemVar *)p;
+        auto *var = (ICItemVar *) p;
         currentTable->addICItem(*var->originalName, var);
     }
 

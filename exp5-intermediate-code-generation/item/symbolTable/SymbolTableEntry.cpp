@@ -94,9 +94,7 @@ int SymbolTableEntry::varGet() const {
     if (type == SymbolTableEntryType::Var) {
         return var->value;
     }
-    if (type != SymbolTableEntryType::VarConst) {
-        assert(type == SymbolTableEntryType::VarConst);
-    }
+    assert(type == SymbolTableEntryType::VarConst);
     return varConst->value;
 }
 

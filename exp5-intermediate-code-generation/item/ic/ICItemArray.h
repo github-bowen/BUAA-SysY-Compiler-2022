@@ -7,6 +7,17 @@
 #include "ICItemVar.h"
 #include "item/symbolTable/SymbolTableEntry.h"
 
+struct OriginType {
+    int d;
+    int length1;
+    int length2;
+
+    OriginType() = default;
+
+    OriginType(int d, int length1, int length2)
+            : d(d), length1(length1), length2(length2) {}
+};
+
 class ICItemArray : public ICItem {
 private:
     static int generateArrayId();
@@ -24,6 +35,7 @@ public:
     const bool isGlobal;
     const bool isConst;
     const int arrayId;
+    OriginType originType;
     int *value;  // const 特有
     int length;  // 一维数组的长度  TODO: 注意，二维数组全部转成一维！
 
@@ -35,6 +47,8 @@ public:
     ~ICItemArray() override;
 
     std::string toString() const;
+
+    void setOriginType(int d, int length1, int length2);
 };
 
 #endif //IC_ITEM_ARRAY_H

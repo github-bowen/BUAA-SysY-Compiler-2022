@@ -18,7 +18,7 @@ static const std::string pre = "./";  // TODO: 修改路径 ../
 std::ifstream input(pre + "testfile.txt");
 std::ofstream normalOutput(pre + "output.txt");
 std::ofstream errorOutput(pre + "error.txt");
-std::ofstream icOutput(pre + "ic_output.txt");
+// std::ofstream icOutput(pre + "ic_output.txt");
 std::ofstream mipsOutput(pre + "mips.txt");
 
 std::map<int, std::string> errorLog;
@@ -75,7 +75,6 @@ int main() {
 #endif
 
     auto *mipsTranslator = new MipsTranslator(icTranslator);
-
 #ifdef STAGE_MIPS
     mipsTranslator->translate();
 #endif

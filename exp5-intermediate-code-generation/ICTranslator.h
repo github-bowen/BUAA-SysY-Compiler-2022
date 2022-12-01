@@ -73,9 +73,12 @@ public:
                           SymbolTableEntry *tableEntry, bool hasInitVal,
                           SymbolTable *currentTable) const;
 
-    void translate_ArrayDef(ICItem *initItem, bool isGlobal,
-                            SymbolTableEntry *tableEntry, bool hasInitVal, int length,
-                            SymbolTable *currentTable) const;
+    void translate_Array1Def(ICItem *initItem, bool isGlobal, SymbolTableEntry *tableEntry,
+                             bool hasInitVal, int length, SymbolTable *currentTable) const;
+
+    void translate_Array2Def(ICItem *initItem, bool isGlobal,
+                             SymbolTableEntry *tableEntry, bool hasInitVal, int d1, int d2,
+                             SymbolTable *currentTable) const;
 
     /* 双目运算符 */
     void translate_BinaryOperator(

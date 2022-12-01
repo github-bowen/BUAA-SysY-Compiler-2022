@@ -51,7 +51,7 @@ void MipsTranslator::translate() {
     int i = 0;
     const auto mainEntryNum = mainStream->size();
 
-    // .data起始地址 0x10010000 (16)     268500992 (10)
+    // .data起始地址 0x10010000 (16进制)     268500992 (10进制)
     mipsOutput << ".data 0x10010000\n";
 
     mipsOutput << "temp:  .space  160000\n\n";  // 临时内存区，起始地址为0x10010000 (16) or 268500992 (10)
@@ -550,18 +550,48 @@ void MipsTranslator::translate_GlobalVarOrArrayDef(ICEntry *defEntry) {
     } else if (defEntry->entryType == ICEntryType::ConstArrayDefine) {
         // 全局常量数组定义
         auto *constArray = ((ICItemArray *) (defEntry->operator1));
+        const int d = constArray->originType.d,
+                length1 = constArray->originType.length1,
+                length2 = constArray->originType.length2;
         const int *initValues = constArray->value;
         const int length = constArray->length;
-        mipsOutput << "\n# " << (*constArray->originalName) << "[" << length << "]" << "\n";
-        mipsOutput << "";  // TODO:
+        if (d == 1) {
+            mipsOutput << "\n# " << (*constArray->originalName) << "[" << length1 << "]" << "\n";
+        } else {
+            mipsOutput << "\n# " << (*constArray->originalName) << "[" << length1 << "]"
+                       << "[" << length2 << "]" << "\n";
+        }
+        mipsOutput << constArray->toString() << ":  .word  ";
+        for (int i = 0; i < length - 1; ++i) {
+            mipsOutput << initValues[i] << ", ";
+        }
+        mipsOutput << initValues[length - 1] << "\n";
     } else if (defEntry->entryType == ICEntryType::VarDefine) {
         // 全局变量定义
         auto *var = ((ICItemVar *) (defEntry->operator1));
         const int initValue = var->value;
         mipsOutput << "\n#" << (*var->originalName) << "\n";
         mipsOutput << var->toString() << ": .word  " << initValue << "\n";
+    } else if (defEntry->entryType == ICEntryType::ArrayDefine) {
+        // 全局变量数组定义
+        auto *array = ((ICItemArray *) (defEntry->operator1));
+        const int d = array->originType.d,
+                length1 = array->originType.length1,
+                length2 = array->originType.length2;
+        const int *initValues = array->value;
+        const int length = array->length;
+        if (d == 1) {
+            mipsOutput << "\n# " << (*array->originalName) << "[" << length1 << "]" << "\n";
+        } else {
+            mipsOutput << "\n# " << (*array->originalName) << "[" << length1 << "]"
+                       << "[" << length2 << "]" << "\n";
+        }
+        mipsOutput << array->toString() << ":  .word  ";
+        for (int i = 0; i < length - 1; ++i) {
+            mipsOutput << initValues[i] << ", ";
+        }
+        mipsOutput << initValues[length - 1] << "\n";
     }
-
 }
 
 bool MipsTranslator::isFuncFParam(ICItemVar *var) {
