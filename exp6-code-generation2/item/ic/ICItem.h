@@ -24,9 +24,11 @@ public:
     bool typeChanged;
     ICItem *newICItem;
 
-    // -----------------------------------------------LVal 引用-----------------------------------------
+    // ----------------------------------------------- LVal 引用 -----------------------------------------
     ICItem *lValReference;
     ReferenceType referenceType;
+    // 该 LVal 是否是函数实参
+    bool isFuncRParam;
     // for Array1_Var
     ICItem *array1_var_index{nullptr};
     // for Array2_Array1
