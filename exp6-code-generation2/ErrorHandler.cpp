@@ -90,8 +90,7 @@ void ErrorHandler::check_FuncDef(Node *node) {
     } else {
         currentFunction = Func::IntFunc;
         auto *functionOfInt = new FunctionOfInt();
-        funcEntry = new SymbolTableEntry(ident, functionOfInt,
-                                         ident->getToken()->lineNumber);
+        funcEntry = new SymbolTableEntry(ident, functionOfInt, ident->getToken()->lineNumber);
     }
     currentTable->addEntry(*funcEntry->getName(), funcEntry);
     currentTable = funcTable;
@@ -537,11 +536,13 @@ SymbolTableEntry *ErrorHandler::check_UnaryExp(Node *node, bool fromConstExp,
             icTranslator->translate_FuncCall(definedEntry->getName(), params);
         }
         if (icItem != nullptr) {
+            // icItem != nullptr: 表示需要用返回值进行赋值
+            // 见 MipsTranslator.cpp 中的 case ICEntryType::Assign：将 $v0 赋值给 dstICItem
             ICItemVar *dstICItem = ((ICItemVar *) icItem);
             icTranslator->translate_BinaryOperator(ICEntryType::Assign, dstICItem, nullptr);
         }
         checkErrorNode(node->getLastChild());
-        return definedEntry;  // TODO
+        return definedEntry;
     }
 }
 
@@ -835,13 +836,12 @@ SymbolTableEntry *ErrorHandler::check_FuncFParam(Node *funcFParam, SymbolTableEn
     }
     if (funcFParam->getChildrenNum() == 4) {
         auto *array1 = new Array1(-1);
-        auto *arrayParam = new SymbolTableEntry(
-                ident, array1, ident->getToken()->lineNumber, true);
+        auto *arrayParam = new SymbolTableEntry(ident, array1, ident->getToken()->lineNumber, true);
         checkErrorNode(funcFParam->getChildAt(3));
         return arrayParam;
     }
     const int d2 = this->check_ConstExp(funcFParam->getChildAt(5));
-    auto *array2 = new Array2(-1, 2);
+    auto *array2 = new Array2(-1, d2);
     auto *array2Param = new SymbolTableEntry(ident, array2, ident->getToken()->lineNumber, true);
     checkErrorNode(funcFParam->getChildAt(3));
     checkErrorNode(funcFParam->getChildAt(6));
@@ -849,7 +849,11 @@ SymbolTableEntry *ErrorHandler::check_FuncFParam(Node *funcFParam, SymbolTableEn
 }
 
 // Block → '{' { BlockItem } '}'
-// 需在调用前新建符号表!!!!!
+/**
+ * 需在调用前新建符号表!!!!!
+ * @param block
+ * @param inFuncBlock
+ */
 void ErrorHandler::check_Block(Node *block, bool inFuncBlock) {
     assert(createSymbolTableBeforeEnterBlock);
     createSymbolTableBeforeEnterBlock = false;
@@ -891,28 +895,31 @@ void ErrorHandler::check_Stmt(Node *stmt, bool inFuncBlock) {
         // Stmt → LVal '=' 'getint''('')'';'
         auto *lValICItem = new ICItem();
         SymbolTableEntry *firstEntry = this->check_LVal(first, false, &temp, lValICItem);
-        ICItem *leftReferenceICItem = lValICItem->reference;
+//        ICItem *leftReferenceICItem = lValICItem->lValReference;
 
         if (firstEntry == nullptr) return;  // 名字未定义
         if (firstEntry->isConst()) {
             // 行号： LVal → Ident {'[' Exp ']'}
             errorLog.insert({first->getFirstChild()->getToken()->lineNumber,
                              errorType2string.find(ErrorType::ConstantModification)->second});
+            return;
         }
 
         if (stmt->getChildAt(2)->is(GrammarItem::Exp)) {  // LVal '=' Exp ';'
             ICItem *rightICItem = new ICItemVar(IS_GLOBAL);
             this->check_Exp(stmt->getChildAt(-2), false, &temp, rightICItem);
-            // TODO: LVal为数组的元素 arr[0]
-            icTranslator->translate_UnaryOperator(ICEntryType::Assign, leftReferenceICItem, rightICItem);
+            // TODO：在 MipsTranslator 中判断 LVal
+            icTranslator->translate_UnaryOperator(ICEntryType::Assign, lValICItem, rightICItem);
         } else {  // LVal '=' 'getint''('')'';'
-            icTranslator->translate_getint(leftReferenceICItem);
+            // TODO：在 MipsTranslator 中判断 LVal
+            icTranslator->translate_getint(lValICItem);
 
             checkErrorNode(stmt->getChildAt(4));
         }
         checkErrorNode(last);
     } else if (first->is(GrammarItem::Block)) {  // Stmt → Block
         auto *childTable = new SymbolTable(currentTable, false);
+        currentTable->addChildTable(childTable);
         currentTable = childTable;
         createSymbolTableBeforeEnterBlock = true;
         this->check_Block(first);
@@ -924,8 +931,12 @@ void ErrorHandler::check_Stmt(Node *stmt, bool inFuncBlock) {
         }
         checkErrorNode(last);
     } else if (first->is(Symbol::IFTK)) {  // Stmt → 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
-        this->check_Cond(stmt->getChildAt(2));
+
+
+        ICItem *cond = new ICItemVar(IS_GLOBAL);
+        this->check_Cond(stmt->getChildAt(2), cond);
         checkErrorNode(stmt->getChildAt(3));  // ErrorType::MissingRPARENT
+
         this->check_Stmt(stmt->getChildAt(4));
         if (stmt->getChildrenNum() > 5) {
             this->check_Stmt(stmt->getChildAt(6));
@@ -990,8 +1001,8 @@ void ErrorHandler::check_Stmt(Node *stmt, bool inFuncBlock) {
 }
 
 // Cond → LOrExp
-void ErrorHandler::check_Cond(Node *node) {
-    this->check_LOrExp(node->getFirstChild());
+void ErrorHandler::check_Cond(Node *node, ICItem *icItem) {
+    this->check_LOrExp(node->getFirstChild(), icItem);
 }
 
 bool ErrorHandler::check_FormatString(Node *node, int *formatNum,
@@ -1030,43 +1041,70 @@ bool ErrorHandler::check_FormatString(Node *node, int *formatNum,
 }
 
 // LOrExp → LAndExp | LOrExp '||' LAndExp
-void ErrorHandler::check_LOrExp(Node *node) {
+void ErrorHandler::check_LOrExp(Node *node, ICItem *icItem) {
     if (node->getChildrenNum() == 1) {
-        this->check_LAndExp(node->getFirstChild());
-    } else {
-        this->check_LOrExp(node->getFirstChild());
-        this->check_LAndExp(node->getLastChild());
+        this->check_LAndExp(node->getFirstChild(), icItem);
+        return;
     }
+
+    auto *var1 = new ICItemVar(IS_GLOBAL);
+    auto *var2 = new ICItemVar(IS_GLOBAL);
+    this->check_LOrExp(node->getFirstChild(), var1);
+    this->check_LAndExp(node->getLastChild(), var2);
+
+    ICItemVar *ret = ((ICItemVar *) icItem);
+    ICEntryType op = icTranslator->symbol2binaryOp(node->getChildAt(1)->getToken()->symbol);
+    icTranslator->translate_BinaryOperator(op, ret, var1, var2);
 }
 
 // LAndExp → EqExp | LAndExp '&&' EqExp
-void ErrorHandler::check_LAndExp(Node *node) {
+void ErrorHandler::check_LAndExp(Node *node, ICItem *icItem) {
     if (node->getChildrenNum() == 1) {
-        this->check_EqExp(node->getFirstChild());
-    } else {
-        this->check_LAndExp(node->getFirstChild());
-        this->check_EqExp(node->getLastChild());
+        this->check_EqExp(node->getFirstChild(), icItem);
+        return;
     }
+
+    auto *var1 = new ICItemVar(IS_GLOBAL);
+    auto *var2 = new ICItemVar(IS_GLOBAL);
+    this->check_LAndExp(node->getFirstChild(), var1);
+    this->check_EqExp(node->getLastChild(), var2);
+
+    ICItemVar *ret = ((ICItemVar *) icItem);
+    ICEntryType op = icTranslator->symbol2binaryOp(node->getChildAt(1)->getToken()->symbol);
+    icTranslator->translate_BinaryOperator(op, ret, var1, var2);
 }
 
 // EqExp → RelExp | EqExp ('==' | '!=') RelExp
-void ErrorHandler::check_EqExp(Node *node) {
+void ErrorHandler::check_EqExp(Node *node, ICItem *icItem) {
     if (node->getChildrenNum() == 1) {
-        this->check_RelExp(node->getFirstChild());
-    } else {
-        this->check_EqExp(node->getFirstChild());
-        this->check_RelExp(node->getLastChild());
+        this->check_RelExp(node->getFirstChild(), icItem);
+        return;
     }
+
+    auto *var1 = new ICItemVar(IS_GLOBAL);
+    auto *var2 = new ICItemVar(IS_GLOBAL);
+    this->check_EqExp(node->getFirstChild(), var1);
+    this->check_RelExp(node->getLastChild(), var2);
+
+    ICItemVar *ret = ((ICItemVar *) icItem);
+    ICEntryType op = icTranslator->symbol2binaryOp(node->getChildAt(1)->getToken()->symbol);
+    icTranslator->translate_BinaryOperator(op, ret, var1, var2);
 }
 
 // RelExp → AddExp | RelExp ('<' | '>' | '<=' | '>=') AddExp
-void ErrorHandler::check_RelExp(Node *node) {
+void ErrorHandler::check_RelExp(Node *node, ICItem *icItem) {
     int temp = 0;
-    auto *icItem = new ICItem();
-    if (node->getChildrenNum() == 1) {  // TODO:
+    if (node->getChildrenNum() == 1) {
         this->check_AddExp(node->getFirstChild(), false, &temp, icItem);
-    } else {
-        this->check_RelExp(node->getFirstChild());  // todo:
-        this->check_AddExp(node->getLastChild(), false, &temp, icItem);
+        return;
     }
+
+    auto *var1 = new ICItemVar(IS_GLOBAL);
+    auto *var2 = new ICItemVar(IS_GLOBAL);
+    this->check_RelExp(node->getFirstChild(), var1);
+    this->check_AddExp(node->getLastChild(), false, &temp, var2);
+
+    ICItemVar *ret = ((ICItemVar *) icItem);
+    ICEntryType op = icTranslator->symbol2binaryOp(node->getChildAt(1)->getToken()->symbol);
+    icTranslator->translate_BinaryOperator(op, ret, var1, var2);
 }

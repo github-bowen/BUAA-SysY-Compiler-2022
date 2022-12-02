@@ -3,6 +3,11 @@
 
 #include "ICItem.h"
 
+/**
+ * 用途：
+ * 1: 在 ICItemFunc 中作为函数的 Label
+ * 2: if-else / while 中，作为 ICEntryType::Beq 的跳转 Label
+ */
 class ICItemLabel : public ICItem {
     static int generateLabelId() {
         static int i = 0;

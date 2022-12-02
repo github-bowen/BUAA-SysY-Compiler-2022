@@ -31,7 +31,17 @@ class ICTranslator {
             {Symbol::MINU,   ICEntryType::Sub},
             {Symbol::MULT,   ICEntryType::Mul},
             {Symbol::DIV,    ICEntryType::Div},
-            {Symbol::MOD,    ICEntryType::Mod}
+            {Symbol::MOD,    ICEntryType::Mod},
+
+            // 代码生成作业2
+            {Symbol::OR,     ICEntryType::Or},
+            {Symbol::AND,    ICEntryType::And},
+            {Symbol::EQL,    ICEntryType::Equal},
+            {Symbol::NEQ,    ICEntryType::NotEqual},
+            {Symbol::LEQ,    ICEntryType::LessEqual},
+            {Symbol::LSS,    ICEntryType::LessThan},
+            {Symbol::GRE,    ICEntryType::GreaterThan},
+            {Symbol::GEQ,    ICEntryType::GreaterEqual}
 
     };
 

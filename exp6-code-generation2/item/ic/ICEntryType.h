@@ -29,6 +29,16 @@ enum class ICEntryType {
     Neg,
     ArrayGet,
     // 第二次代码生成作业:
+    Or,
+    And,
+    Equal,
+    NotEqual,
+    LessEqual,
+    LessThan,
+    GreaterThan,
+    GreaterEqual,
+
+    Beq,
 };
 
 #endif //IC_ENTRY_TYPE_H

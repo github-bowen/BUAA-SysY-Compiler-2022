@@ -125,7 +125,7 @@ void MipsTranslator::translate() {
             case ICEntryType::MainFuncEnd:
                 exit();
                 break;
-            case ICEntryType::Getint: {
+            case ICEntryType::Getint: {  // TODO: LVal！！！！！！！！！！！
                 auto *dst = ((ICItemVar *) op1);
                 getint(dst);
                 break;
@@ -144,10 +144,9 @@ void MipsTranslator::translate() {
                 }
                 break;
             }
-            case ICEntryType::Assign: {
+            case ICEntryType::Assign: {  // TODO: LVal！！！！！！！！！！！
                 auto *left = (ICItemVar *) op1, *right = (ICItemVar *) op2;
-                if (right == nullptr) {
-                    // 从函数返回后赋值
+                if (right == nullptr) {  // 从函数返回后赋值
                     sw(Reg::$v0, left);
                 } else {
                     lw(Reg::$t0, right);

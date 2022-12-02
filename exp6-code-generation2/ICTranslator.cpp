@@ -193,13 +193,13 @@ void ICTranslator::translate_Array2Def(ICItem *initItem, bool isGlobal,
 void ICTranslator::translate_BinaryOperator(ICEntryType icEntryType,
                                             ICItem *dst, ICItem *src1, ICItem *src2) const {
     if (currentFunc == nullptr) {
-        if (icEntryType == ICEntryType::Assign) {
+        if (icEntryType == ICEntryType::Assign || icEntryType == ICEntryType::Beq) {
             mainEntries->push_back(new ICEntry(icEntryType, dst, src1));
         } else {
             mainEntries->push_back(new ICEntry(icEntryType, dst, src1, src2));
         }
     } else {
-        if (icEntryType == ICEntryType::Assign) {
+        if (icEntryType == ICEntryType::Assign || icEntryType == ICEntryType::Beq) {
             currentFunc->entries->push_back(new ICEntry(icEntryType, dst, src1));
         } else {
             currentFunc->entries->push_back(new ICEntry(icEntryType, dst, src1, src2));

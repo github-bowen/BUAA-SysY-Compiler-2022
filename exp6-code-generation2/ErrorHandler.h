@@ -71,15 +71,15 @@ public:
 
     void check_Stmt(Node *stmt, bool inFuncBlock = false);
 
-    void check_Cond(Node *node);
+    void check_Cond(Node *node, ICItem *icItem);
 
-    void check_LOrExp(Node *node);
+    void check_LOrExp(Node *node, ICItem *icItem);
 
-    void check_LAndExp(Node *node);
+    void check_LAndExp(Node *node, ICItem *icItem);
 
-    void check_EqExp(Node *node);
+    void check_EqExp(Node *node, ICItem *icItem);
 
-    void check_RelExp(Node *node);
+    void check_RelExp(Node *node, ICItem *icItem);
 
     void check_VarDef(Node *node);
 
