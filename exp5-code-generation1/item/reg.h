@@ -26,8 +26,9 @@ enum class Reg {
     $ra
 };
 
-const Reg tempRegs[] = {Reg::$t0, Reg::$t1, Reg::$t2, Reg::$t3, Reg::$t4,
-                        Reg::$t5, Reg::$t6, Reg::$t7, Reg::$t8, Reg::$t9};
+// const Reg tempRegs[] = {Reg::$t0, Reg::$t1, Reg::$t2, Reg::$t3, Reg::$t4,
+//                         Reg::$t5, Reg::$t6, Reg::$t7, Reg::$t8, Reg::$t9};
+const Reg tempRegs[] = {Reg::$t0, Reg::$t1, Reg::$t2};
 
 const std::map<Reg, std::string> reg2s = {
         {Reg::$zero, "$zero"},

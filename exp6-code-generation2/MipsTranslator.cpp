@@ -732,13 +732,21 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var) {
                     lw(reg, 0, reg);
                     return;
                 }
-                case ReferenceType::Array1: {
-                    
+                case ReferenceType::Array1:  // 传数组的首地址 TODO: 待处理从数组形参中 lw的情况
+                case ReferenceType::Array2: {
+                    auto arrayItem = (ICItemArray *) referenceItem;
+                    la(reg, arrayItem->toString());
+                    return;
                 }
-                case ReferenceType::Array2:
-                    break;
-                case ReferenceType::Array2_Array1:
-                    break;
+                case ReferenceType::Array2_Array1: {  // 传新数组的首地址 TODO: 待处理从数组形参中 lw的情况
+                    ICItem *offsetItem = referenceItem->array2_array1_index;
+                    auto *array2Item = (ICItemArray *) referenceItem;
+                    const int refArrayD2 = array2Item->originType.length2;
+                    lw(Reg::$t9, (ICItemVar *) offsetItem);
+                    
+                    mul(Reg::$t9, Reg::$t9, );
+
+                }
                 case ReferenceType::Unset:
                     throw std::runtime_error("\nError in MipsTranslator.cpp, line " +
                                              std::to_string(__LINE__) +
