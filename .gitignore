@@ -24,3 +24,8 @@ CMakeLists.txt
 # /*/*.sh
 # /*/*/*.sh
 
+*.zip
+*.rar
+/*/*.zip
+/*/*.rar
+

@@ -40,7 +40,7 @@ public:
 
     void lw(Reg dst, int offset, Reg base);
 
-    void sw(Reg reg, ICItemVar *var);
+    void sw(Reg reg, ICItemVar *dst);
 
     void sw(Reg src, int offset, Reg base);
 
@@ -75,6 +75,8 @@ public:
     void subu(Reg rd, Reg rs, Reg rt);
 
     void mul(Reg rd, Reg rs, Reg rt);
+
+    void mul(Reg dst, Reg srcReg, int srcNum);
 
     void divu(Reg rs, Reg rt);
 

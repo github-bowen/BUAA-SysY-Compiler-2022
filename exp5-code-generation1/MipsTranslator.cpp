@@ -664,6 +664,7 @@ void MipsTranslator::move(Reg dst, Reg src) {
 }
 
 void MipsTranslator::pushTempReg() {  // t0 - t9, ra
+    return;
     mipsOutput << "\n\n# store temp regs\n";
     addi(Reg::$sp, Reg::$sp, -44);
     int offset = 0;
@@ -675,6 +676,7 @@ void MipsTranslator::pushTempReg() {  // t0 - t9, ra
 }
 
 void MipsTranslator::popTempReg() {
+    return;
     mipsOutput << "\n\n# recover temp regs\n";
     int offset = 0;
     for (const Reg reg: tempRegs) {

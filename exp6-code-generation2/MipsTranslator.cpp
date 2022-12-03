@@ -587,11 +587,11 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
 
 // 返回params个数
 int MipsTranslator::pushParams(const std::vector<ICItem *> *params) {
-    mipsOutput << "\n\n# store function params\n";
+    mipsOutput << "\n\n# Pushing Function Real Params:\n";
     const int num = params->size();
     addi(Reg::$sp, Reg::$sp, -num * 4);
     int offset = 0;
-    for (const auto *param: *params) {
+    for (const ICItem *param: *params) {
         if (param->type == ICItemType::Imm) {
             auto *imm = (ICItemImm *) param;
             li(Reg::$t0, imm->value);
@@ -606,13 +606,13 @@ int MipsTranslator::pushParams(const std::vector<ICItem *> *params) {
                 lw(Reg::$t0, var);
             }
         } else if (param->type == ICItemType::Array) {
-
+            lw(Reg::$t0, (ICItemVar *) param);  // 会在 lw 中找到 param的lValReference，传入数组首地址
         }
         sw(Reg::$t0, offset, Reg::$sp);
         offset += 4;
     }
 
-    mipsOutput << "\n\n";
+    mipsOutput << "# Finished Pushing Params!\n\n";
     return num;
 }
 
@@ -735,17 +735,21 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var) {
                 case ReferenceType::Array1:  // 传数组的首地址 TODO: 待处理从数组形参中 lw的情况
                 case ReferenceType::Array2: {
                     auto arrayItem = (ICItemArray *) referenceItem;
+                    mipsOutput << "# 实参类型 Array2\n";
                     la(reg, arrayItem->toString());
                     return;
                 }
                 case ReferenceType::Array2_Array1: {  // 传新数组的首地址 TODO: 待处理从数组形参中 lw的情况
                     ICItem *offsetItem = referenceItem->array2_array1_index;
                     auto *array2Item = (ICItemArray *) referenceItem;
-                    const int refArrayD2 = array2Item->originType.length2;
-                    lw(Reg::$t9, (ICItemVar *) offsetItem);
-                    
-                    mul(Reg::$t9, Reg::$t9, );
-
+                    const int refArrayD2 = array2Item->originType.length2;  // 所引用数组的第二维长度
+                    mipsOutput << "# 实参类型：Array2_Array1，传入开始\n";
+                    lw(Reg::$t9, (ICItemVar *) offsetItem);  // $t9 = 数组下标
+                    mul(Reg::$t9, Reg::$t9, refArrayD2);  // 实际上传入的数组参数的首地址相对于原数组首地址的偏移
+                    la(reg, array2Item->toString());
+                    addu(reg, reg, Reg::$t9);
+                    mipsOutput << "# 实参类型：Array2_Array1，传入结束\n";
+                    return;
                 }
                 case ReferenceType::Unset:
                     throw std::runtime_error("\nError in MipsTranslator.cpp, line " +
@@ -784,42 +788,94 @@ void MipsTranslator::lw(Reg dst, int offset, Reg base) {
                offset << "(" << reg2s.find(base)->second << ")\n";
 }
 
-void MipsTranslator::sw(Reg reg, ICItemVar *var) {
+void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
     int addr;
-    ICItem *item = var;
-    if (item->lValReference != nullptr) {
-        while (item->lValReference != nullptr) {
-            item = item->lValReference;
+    ICItem *dstLVal = dst;
+    if (dstLVal->lValReference != nullptr) {
+        // dst 是 LVal
+        ReferenceType referenceType = dstLVal->referenceType;
+        dstLVal = dstLVal->lValReference;
+
+        switch (referenceType) {
+            case ReferenceType::Var: {
+                sw(reg, (ICItemVar *) dstLVal);
+                return;
+            }
+            case ReferenceType::Array1_Var: {  // 存到一维数组的某个元素里
+                ICItem *offsetItem = dstLVal->array1_var_index;
+                lw(Reg::$t9, (ICItemVar *) offsetItem);  // $t9 = 数组下标
+                sll(Reg::$t9, Reg::$t9, 2);  // t9 = t9 * 4
+                auto array1Item = (ICItemArray *) dstLVal;
+                la(Reg::$t8, array1Item->toString());
+                addu(reg, reg, Reg::$t9);  // reg = reg + t9 = 基地址 + 偏移
+                lw(reg, 0, reg);
+                return;
+            }
+            case ReferenceType::Array2_Var: {
+                ICItem *offsetItem1 = dstLVal->array2_var_index1;
+                ICItem *offsetItem2 = dstLVal->array2_var_index2;
+                lw(Reg::$t8, (ICItemVar *) offsetItem1);  // $t8 = 数组下标 1
+                lw(Reg::$t9, (ICItemVar *) offsetItem2);  // $t9 = 数组下标 2
+                mul(Reg::$t9, Reg::$t9, Reg::$t8);
+                sll(Reg::$t9, Reg::$t9, 2);  // t9 = t9 * 4
+                auto array2Item = (ICItemArray *) dstLVal;
+                la(reg, array2Item->toString());
+                addu(reg, reg, Reg::$t9);  // reg = reg + t9 = 基地址 + 偏移
+                lw(reg, 0, reg);
+                return;
+            }
+            case ReferenceType::Array1:  // 传数组的首地址 TODO: 待处理从数组形参中 lw的情况
+            case ReferenceType::Array2: {
+                auto arrayItem = (ICItemArray *) dstLVal;
+                mipsOutput << "# 实参类型 Array2\n";
+                la(reg, arrayItem->toString());
+                return;
+            }
+            case ReferenceType::Array2_Array1: {  // 传新数组的首地址 TODO: 待处理从数组形参中 lw的情况
+                ICItem *offsetItem = dstLVal->array2_array1_index;
+                auto *array2Item = (ICItemArray *) dstLVal;
+                const int refArrayD2 = array2Item->originType.length2;  // 所引用数组的第二维长度
+                mipsOutput << "# 实参类型：Array2_Array1，传入开始\n";
+                lw(Reg::$t9, (ICItemVar *) offsetItem);  // $t9 = 数组下标
+                mul(Reg::$t9, Reg::$t9, refArrayD2);  // 实际上传入的数组参数的首地址相对于原数组首地址的偏移
+                la(reg, array2Item->toString());
+                addu(reg, reg, Reg::$t9);
+                mipsOutput << "# 实参类型：Array2_Array1，传入结束\n";
+                return;
+            }
+            case ReferenceType::Unset:
+                throw std::runtime_error("\nError in MipsTranslator.cpp, line " +
+                                         std::to_string(__LINE__) +
+                                         ": reaching illegal cases\n");
+
         }
-//        sw(reg, (ICItemVar *) item);
-//        return;
-        var = (ICItemVar *) item;
+        return;  // 处理完所有 LVal的情况
     }
-    if (var->isGlobal) {
-        la(Reg::$t9, var->toString());
+    if (dst->isGlobal) {
+        la(Reg::$t9, dst->toString());
         sw(reg, 0, Reg::$t9);
         return;
     }
-    if (isFuncFParam(var)) {
-        addr = funcFParamId2offset.find(var->varId)->second;
+    if (isFuncFParam(dst)) {
+        addr = funcFParamId2offset.find(dst->varId)->second;
         mipsOutput << "sw " << reg2s.find(reg)->second << ", " << addr << "($sp)\n";
         return;
     }
-    if (var->isTemp) {
-        if (tempVarId2mem.find(var->tempVarId) == tempVarId2mem.end()) {
-            tempVarId2mem.insert({var->tempVarId, tempStackAddressTop});
+    if (dst->isTemp) {
+        if (tempVarId2mem.find(dst->tempVarId) == tempVarId2mem.end()) {
+            tempVarId2mem.insert({dst->tempVarId, tempStackAddressTop});
             addr = tempStackAddressTop;
             tempStackAddressTop += 4;
         } else {
-            addr = tempVarId2mem.find(var->tempVarId)->second;
+            addr = tempVarId2mem.find(dst->tempVarId)->second;
         }
     } else {
-        if (localVarId2mem.find(var->varId) == localVarId2mem.end()) {
-            localVarId2mem.insert({var->varId, tempStackAddressTop});
+        if (localVarId2mem.find(dst->varId) == localVarId2mem.end()) {
+            localVarId2mem.insert({dst->varId, tempStackAddressTop});
             addr = tempStackAddressTop;
             tempStackAddressTop += 4;
         } else {
-            addr = localVarId2mem.find(var->varId)->second;
+            addr = localVarId2mem.find(dst->varId)->second;
         }
     }
     mipsOutput << "sw " << reg2s.find(reg)->second << ", " << addr << "($0)\n";
@@ -839,6 +895,7 @@ void MipsTranslator::move(Reg dst, Reg src) {
 }
 
 void MipsTranslator::pushTempReg() {  // t0 - t9, ra
+    return;
     mipsOutput << "\n\n# store temp regs\n";
     addi(Reg::$sp, Reg::$sp, -44);
     int offset = 0;
@@ -850,6 +907,7 @@ void MipsTranslator::pushTempReg() {  // t0 - t9, ra
 }
 
 void MipsTranslator::popTempReg() {
+    return;
     mipsOutput << "\n\n# recover temp regs\n";
     int offset = 0;
     for (const Reg reg: tempRegs) {
@@ -921,6 +979,12 @@ void MipsTranslator::mul(Reg rd, Reg rs, Reg rt) {
     mipsOutput << "mul " + reg2s.find(rd)->second <<
                ", " << reg2s.find(rs)->second <<
                ", " << reg2s.find(rt)->second << "\n";
+}
+
+void MipsTranslator::mul(Reg dst, Reg srcReg, int srcNum) {
+    mipsOutput << "mul " + reg2s.find(dst)->second <<
+               ", " << reg2s.find(srcReg)->second <<
+               ", " << srcNum << "\n";
 }
 
 void MipsTranslator::divu(Reg rs, Reg rt) {
