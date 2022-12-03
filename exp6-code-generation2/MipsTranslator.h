@@ -84,6 +84,8 @@ public:
 
     void jr();
 
+    void sll(Reg dst, Reg src, int bits);
+
     bool isFuncFParam(ICItemVar *var);
 
 };

@@ -688,6 +688,8 @@ SymbolTableEntry *ErrorHandler::check_LVal(Node *node, bool fromConstExp,
             icItem->type = ICItemType::Var;
             icItem->referenceType = ReferenceType::Var;
             if (fromConstExp) {
+                icItem->type = ICItemType::Imm;
+                icItem->referenceType = ReferenceType::Unset;
                 *constExpValue = definedEntry->varGet();
                 return nullptr;
             }
@@ -698,6 +700,10 @@ SymbolTableEntry *ErrorHandler::check_LVal(Node *node, bool fromConstExp,
             icItem->type = ICItemType::Array;
             icItem->referenceType = ReferenceType::Array1;
             if (fromConstExp) {
+                throw std::runtime_error("\nError in ErrorHandler.cpp, line " +
+                                         std::to_string(__LINE__) +
+                                         ": get 'fromConstExp = true' while "
+                                         "checking Array1_Array1 LVal\n");
                 *constExpValue = definedEntry->varGet();
                 return nullptr;
             }
@@ -707,6 +713,10 @@ SymbolTableEntry *ErrorHandler::check_LVal(Node *node, bool fromConstExp,
             icItem->type = ICItemType::Array;
             icItem->referenceType = ReferenceType::Array2;
             if (fromConstExp) {
+                throw std::runtime_error("\nError in ErrorHandler.cpp, line " +
+                                         std::to_string(__LINE__) +
+                                         ": get 'fromConstExp = true' "
+                                         "while checking Array2_Array2 LVal\n");
                 *constExpValue = definedEntry->varGet();
                 return nullptr;
             }
@@ -736,6 +746,10 @@ SymbolTableEntry *ErrorHandler::check_LVal(Node *node, bool fromConstExp,
                                                    SymbolTableEntryType::Array1, v1);
 
             if (fromConstExp) {
+                throw std::runtime_error("\nError in ErrorHandler.cpp, line " +
+                                         std::to_string(__LINE__) +
+                                         ": get 'fromConstExp = true' "
+                                         "while checking Array2_Array1 LVal\n");
                 icItem->array2_array1_index = new ICItemImm(v1);
                 // *constExpValue = referencedEntry->getValueFromReferencedArray1(v1);
                 return nullptr;

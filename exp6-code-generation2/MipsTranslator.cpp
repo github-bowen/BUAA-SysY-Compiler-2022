@@ -140,6 +140,7 @@ void MipsTranslator::translate() {
                 }
                 jal(calledFunc);
                 if (paramNum > 0) {
+                    // 注：数组传参只传首地址，仍只占4字节，故不需要改
                     addi(Reg::$sp, Reg::$sp, paramNum * 4);
                 }
                 popTempReg();
@@ -586,7 +587,7 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
 
 // 返回params个数
 int MipsTranslator::pushParams(const std::vector<ICItem *> *params) {
-    mipsOutput << "\n\n# store funcrtion params\n";
+    mipsOutput << "\n\n# store function params\n";
     const int num = params->size();
     addi(Reg::$sp, Reg::$sp, -num * 4);
     int offset = 0;
@@ -604,6 +605,8 @@ int MipsTranslator::pushParams(const std::vector<ICItem *> *params) {
             } else {
                 lw(Reg::$t0, var);
             }
+        } else if (param->type == ICItemType::Array) {
+
         }
         sw(Reg::$t0, offset, Reg::$sp);
         offset += 4;
@@ -674,18 +677,78 @@ bool MipsTranslator::isFuncFParam(ICItemVar *var) {
 
 void MipsTranslator::lw(Reg reg, ICItemVar *var) {
     int addr;
-    ICItem *item = var;
-    if (item->lValReference != nullptr) {
-        while (item->lValReference != nullptr) {
-            item = item->lValReference;
-        }
-        if (item->type == ICItemType::Imm) {
-            li(reg, ((ICItemImm *) item)->value);
+    ICItem *referenceItem = var;
+    if (referenceItem->lValReference != nullptr) {  // var 为 LVal
+//        while (referenceItem->lValReference != nullptr) {
+//            referenceItem = referenceItem->lValReference;
+//        }
+        ReferenceType referenceType = referenceItem->referenceType;
+        referenceItem = referenceItem->lValReference;
+        if (referenceItem->type == ICItemType::Imm) {
+            li(reg, ((ICItemImm *) referenceItem)->value);
             return;
         } else {
-            var = (ICItemVar *) item;
+            switch (referenceType) {
+                case ReferenceType::Var: {
+                    var = (ICItemVar *) referenceItem;
+                    if (var->isGlobal) {
+                        la(reg, var->toString());
+                        lw(reg, 0, reg);
+                    } else if (isFuncFParam(var)) {
+                        addr = funcFParamId2offset.find(var->varId)->second;
+                        lw(reg, addr, Reg::$sp);
+                    } else if (var->isConst) {
+                        li(reg, var->value);
+                    } else {
+                        if (var->isTemp) {
+                            addr = tempVarId2mem.find(var->tempVarId)->second;
+                        } else {
+                            addr = localVarId2mem.find(var->varId)->second;
+                        }
+                        lw(reg, addr, Reg::$zero);
+                    }
+                    return;
+                }
+                case ReferenceType::Array1_Var: {
+                    ICItem *offsetItem = referenceItem->array1_var_index;
+                    lw(Reg::$t9, (ICItemVar *) offsetItem);  // $t8 = 数组下标
+                    sll(Reg::$t9, Reg::$t9, 2);  // t9 = t9 * 4
+                    auto array1Item = (ICItemArray *) referenceItem;
+                    la(reg, array1Item->toString());
+                    addu(reg, reg, Reg::$t9);  // reg = reg + t8 = 基地址 + 偏移
+                    lw(reg, 0, reg);
+                    return;
+                }
+                case ReferenceType::Array2_Var: {
+                    ICItem *offsetItem1 = referenceItem->array2_var_index1;
+                    ICItem *offsetItem2 = referenceItem->array2_var_index2;
+                    lw(Reg::$t8, (ICItemVar *) offsetItem1);  // $t8 = 数组下标 1
+                    lw(Reg::$t9, (ICItemVar *) offsetItem2);  // $t9 = 数组下标 2
+                    mul(Reg::$t9, Reg::$t9, Reg::$t8);
+                    sll(Reg::$t9, Reg::$t9, 2);  // t9 = t9 * 4
+                    auto array2Item = (ICItemArray *) referenceItem;
+                    la(reg, array2Item->toString());
+                    addu(reg, reg, Reg::$t9);  // reg = reg + t9 = 基地址 + 偏移
+                    lw(reg, 0, reg);
+                    return;
+                }
+                case ReferenceType::Array1: {
+                    
+                }
+                case ReferenceType::Array2:
+                    break;
+                case ReferenceType::Array2_Array1:
+                    break;
+                case ReferenceType::Unset:
+                    throw std::runtime_error("\nError in MipsTranslator.cpp, line " +
+                                             std::to_string(__LINE__) +
+                                             ": reaching illegal cases\n");
+            }
         }
+        return;  // 处理完所有 LVal的情况
     }
+
+    // 非 LVal
     if (var->isGlobal) {
         la(reg, var->toString());
         lw(reg, 0, reg);
@@ -693,7 +756,7 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var) {
     }
     if (isFuncFParam(var)) {
         addr = funcFParamId2offset.find(var->varId)->second;
-        mipsOutput << "lw " << reg2s.find(reg)->second << ", " << addr << "($sp)\n";
+        lw(reg, addr, Reg::$sp);
         return;
     }
     if (var->isConst) {
@@ -705,12 +768,12 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var) {
     } else {
         addr = localVarId2mem.find(var->varId)->second;
     }
-    mipsOutput << "lw " << reg2s.find(reg)->second << ", " << addr << "($0)\n";
+    lw(reg, addr, Reg::$zero);
 }
 
 void MipsTranslator::lw(Reg dst, int offset, Reg base) {
     mipsOutput << "lw " << reg2s.find(dst)->second << ", " <<
-               std::to_string(offset) << "(" << reg2s.find(base)->second << ")\n";
+               offset << "(" << reg2s.find(base)->second << ")\n";
 }
 
 void MipsTranslator::sw(Reg reg, ICItemVar *var) {
@@ -867,6 +930,11 @@ void MipsTranslator::mflo(Reg reg) {
 
 void MipsTranslator::jr() {
     mipsOutput << "jr $ra\n";
+}
+
+void MipsTranslator::sll(Reg dst, Reg src, int bits) {
+    mipsOutput << "sll " << reg2s.find(dst)->second << ", "
+               << reg2s.find(src)->second << ", " << bits << '\n';
 }
 
 
