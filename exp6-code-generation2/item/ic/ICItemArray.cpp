@@ -2,7 +2,7 @@
 
 int ICItemArray::generateArrayId() {
     static int i = 0;
-    return ++i;
+    return --i;
 }
 
 int ICItemArray::generateTempArrayId() {

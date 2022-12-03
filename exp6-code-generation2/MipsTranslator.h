@@ -14,6 +14,10 @@ public:
 
     std::map<int, int> tempVarId2mem;  // id 为正
 
+    std::map<int, int> localArrayId2mem;  // id 为负
+
+    std::map<int, int> tempArrayId2mem;  // id 为正
+
     std::map<Reg, bool> regUsage;
 
     std::map<Reg, int> reg2id;

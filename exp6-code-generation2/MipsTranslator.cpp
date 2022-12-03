@@ -105,7 +105,7 @@ void MipsTranslator::translate() {
                 const bool hasInitValue = op2 != nullptr;
                 auto *array = (ICItemArray *) op1;
                 const int firstAddress = tempStackAddressTop;
-                localVarId2mem.insert({array->arrayId, tempStackAddressTop});
+                localArrayId2mem.insert({array->arrayId, tempStackAddressTop});
                 tempStackAddressTop += 4 * array->length;
                 if (hasInitValue) {
                     li(Reg::$t1, firstAddress);  // 数组基地址
@@ -120,7 +120,7 @@ void MipsTranslator::translate() {
             case ICEntryType::ConstArrayDefine: {
                 auto *array = (ICItemArray *) op1;
                 const int firstAddress = tempStackAddressTop;
-                localVarId2mem.insert({array->arrayId, tempStackAddressTop});
+                localArrayId2mem.insert({array->arrayId, tempStackAddressTop});
                 tempStackAddressTop += 4 * array->length;
 
                 li(Reg::$t1, firstAddress);  // 数组基地址
