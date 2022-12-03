@@ -272,6 +272,22 @@ void ICTranslator::translate_printf(std::vector<int> *indexOfPercentSign,
     }
 }
 
+void ICTranslator::translate_Beq(ICItem *condition, ICItemLabel *label) const {
+    if (currentFunc == nullptr) {
+        mainEntries->push_back(new ICEntry(ICEntryType::Beq, condition, label));
+    } else {
+        currentFunc->entries->push_back(new ICEntry(ICEntryType::Beq, condition, label));
+    }
+}
+
+void ICTranslator::translate_InsertLabel(ICItemLabel *label) const {
+    if (currentFunc == nullptr) {
+        mainEntries->push_back(new ICEntry(ICEntryType::InsertLabel, label));
+    } else {
+        currentFunc->entries->push_back(new ICEntry(ICEntryType::InsertLabel, label));
+    }
+}
+
 ICItemFunc *ICTranslator::translate_FuncDef(SymbolTableEntry *funcEntry,
                                             SymbolTable *currentTable) const {
     auto *func = new ICItemFunc(funcEntry);
@@ -320,4 +336,3 @@ void ICTranslator::translate_MainFunc() const {
     assert(currentFunc == nullptr);
     mainEntries->push_back(new ICEntry(ICEntryType::MainFuncStart));
 }
-

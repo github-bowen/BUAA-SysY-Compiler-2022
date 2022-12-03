@@ -105,6 +105,10 @@ public:
                           std::vector<ICItem *> *intItems,
                           std::string *s) const;
 
+    void translate_Beq(ICItem *condition, ICItemLabel *label) const;
+
+    void translate_InsertLabel(ICItemLabel *label) const;
+
     /* 转到主函数 */
     void translate_MainFunc() const;
 

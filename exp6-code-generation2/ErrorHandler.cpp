@@ -932,21 +932,36 @@ void ErrorHandler::check_Stmt(Node *stmt, bool inFuncBlock) {
         checkErrorNode(last);
     } else if (first->is(Symbol::IFTK)) {  // Stmt → 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
 
-
+        auto *jumpLabel = new ICItemLabel();
         ICItem *cond = new ICItemVar(IS_GLOBAL);
         this->check_Cond(stmt->getChildAt(2), cond);
-        checkErrorNode(stmt->getChildAt(3));  // ErrorType::MissingRPARENT
 
+        icTranslator->translate_Beq(cond, jumpLabel);  // beq cond, jumpLabel
+        checkErrorNode(stmt->getChildAt(3));  // ErrorType::MissingRPARENT
         this->check_Stmt(stmt->getChildAt(4));
+
+        icTranslator->translate_InsertLabel(jumpLabel);  // jumpLabel:
         if (stmt->getChildrenNum() > 5) {
             this->check_Stmt(stmt->getChildAt(6));
         }
+
     } else if (first->is(Symbol::WHILETK)) {  // Stmt → 'while' '(' Cond ')' Stmt
-        this->check_Cond(stmt->getChildAt(2));
+
+        auto *whileStartLabel = new ICItemLabel(), *whileEndLabel = new ICItemLabel();
+        icTranslator->translate_InsertLabel(whileStartLabel);
+
+        ICItem *cond = new ICItemVar(IS_GLOBAL);
+        this->check_Cond(stmt->getChildAt(2), cond);
+
+        icTranslator->translate_Beq(cond, whileEndLabel);  // beq cond, whileEndLabel
         checkErrorNode(stmt->getChildAt(3));  // ErrorType::MissingRPARENT
+
         inWhile++;
         this->check_Stmt(stmt->getChildAt(4));
         inWhile--;
+
+        icTranslator->translate_InsertLabel(whileEndLabel);
+
     } else if (first->is(Symbol::BREAKTK) || first->is(Symbol::CONTINUETK)) {
         if (!inWhile) {
             errorLog.insert(

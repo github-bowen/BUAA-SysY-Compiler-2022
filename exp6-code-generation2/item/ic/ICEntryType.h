@@ -39,6 +39,8 @@ enum class ICEntryType {
     GreaterEqual,
 
     Beq,
+    InsertLabel,
+
 };
 
 #endif //IC_ENTRY_TYPE_H

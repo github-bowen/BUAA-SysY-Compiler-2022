@@ -101,11 +101,36 @@ void MipsTranslator::translate() {
                 sw(Reg::$t0, constVar);
                 break;
             }
-            case ICEntryType::ArrayDefine:
+            case ICEntryType::ArrayDefine: {  // 局部数组
+                const bool hasInitValue = op2 != nullptr;
+                auto *array = (ICItemArray *) op1;
+                const int firstAddress = tempStackAddressTop;
+                localVarId2mem.insert({array->arrayId, tempStackAddressTop});
+                tempStackAddressTop += 4 * array->length;
+                if (hasInitValue) {
+                    li(Reg::$t1, firstAddress);  // 数组基地址
+                    for (int j = 0; j < array->length; ++j) {
+                        ICItemVar *rightValue = ((ICItemArray *) op2)->itemsToInitArray->at(j);
+                        lw(Reg::$t0, rightValue);
+                        sw(Reg::$t0, j * 4, Reg::$t1);
+                    }
+                }
                 break;
-            case ICEntryType::ConstArrayDefine:
+            }
+            case ICEntryType::ConstArrayDefine: {
+                auto *array = (ICItemArray *) op1;
+                const int firstAddress = tempStackAddressTop;
+                localVarId2mem.insert({array->arrayId, tempStackAddressTop});
+                tempStackAddressTop += 4 * array->length;
+
+                li(Reg::$t1, firstAddress);  // 数组基地址
+                for (int j = 0; j < array->length; ++j) {
+                    const int rightValue = array->value[j];
+                    li(Reg::$t0, rightValue);
+                    sw(Reg::$t0, j * 4, Reg::$t1);
+                }
                 break;
-                // case ICEntryType::FuncDefine:  // 非法，不应该出现这个
+            }
             case ICEntryType::FuncCall: {
                 auto *calledFunc = (const ICItemFunc *) (entry->calledFunc);
                 pushTempReg();
@@ -268,6 +293,30 @@ void MipsTranslator::translate() {
                 break;
             }
             case ICEntryType::ArrayGet:
+                break;
+            case ICEntryType::FuncDefine:
+                break;
+            case ICEntryType::MainFuncStart:
+                break;
+            case ICEntryType::Or:
+                break;
+            case ICEntryType::And:
+                break;
+            case ICEntryType::Equal:
+                break;
+            case ICEntryType::NotEqual:
+                break;
+            case ICEntryType::LessEqual:
+                break;
+            case ICEntryType::LessThan:
+                break;
+            case ICEntryType::GreaterThan:
+                break;
+            case ICEntryType::GreaterEqual:
+                break;
+            case ICEntryType::Beq:
+                break;
+            case ICEntryType::InsertLabel:
                 break;
         }
         i++;
@@ -502,6 +551,32 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
             }
             case ICEntryType::ArrayGet:
                 break;
+            case ICEntryType::FuncDefine:
+                break;
+            case ICEntryType::MainFuncStart:
+                break;
+            case ICEntryType::MainFuncEnd:
+                break;
+            case ICEntryType::Or:
+                break;
+            case ICEntryType::And:
+                break;
+            case ICEntryType::Equal:
+                break;
+            case ICEntryType::NotEqual:
+                break;
+            case ICEntryType::LessEqual:
+                break;
+            case ICEntryType::LessThan:
+                break;
+            case ICEntryType::GreaterThan:
+                break;
+            case ICEntryType::GreaterEqual:
+                break;
+            case ICEntryType::Beq:
+                break;
+            case ICEntryType::InsertLabel:
+                break;
         }
         i++;
     }
@@ -600,9 +675,9 @@ bool MipsTranslator::isFuncFParam(ICItemVar *var) {
 void MipsTranslator::lw(Reg reg, ICItemVar *var) {
     int addr;
     ICItem *item = var;
-    if (item->reference != nullptr) {
-        while (item->reference != nullptr) {
-            item = item->reference;
+    if (item->lValReference != nullptr) {
+        while (item->lValReference != nullptr) {
+            item = item->lValReference;
         }
         if (item->type == ICItemType::Imm) {
             li(reg, ((ICItemImm *) item)->value);
@@ -641,9 +716,9 @@ void MipsTranslator::lw(Reg dst, int offset, Reg base) {
 void MipsTranslator::sw(Reg reg, ICItemVar *var) {
     int addr;
     ICItem *item = var;
-    if (item->reference != nullptr) {
-        while (item->reference != nullptr) {
-            item = item->reference;
+    if (item->lValReference != nullptr) {
+        while (item->lValReference != nullptr) {
+            item = item->lValReference;
         }
 //        sw(reg, (ICItemVar *) item);
 //        return;
