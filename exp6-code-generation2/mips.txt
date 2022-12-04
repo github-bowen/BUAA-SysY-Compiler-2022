@@ -2,115 +2,150 @@
 temp:  .space  160000
 
 
-# a
-global_const_var1:  .word  1
+# ZERO
+global_const_var1:  .word  0
 
-#d
-global_var2: .word  1
+# ONE
+global_const_var2:  .word  1
+
+# TWO
+global_const_var3:  .word  2
+
+# THREE
+global_const_var4:  .word  3
+
+#one
+global_var5: .word  1
+
+#two
+global_var6: .word  2
+
+#three
+global_var7: .word  3
+
+#gvar
+global_var8: .word  0
 
 # string tokens: 
-str_1:  .asciiz   "Author: 19376160\n"
+str_1:  .asciiz   "Set global variable as "
 str_3:  .asciiz   "\n"
-str_5:  .asciiz   "\n"
-str_7:  .asciiz   "\n"
+str_4:  .asciiz   "Set local variable as "
+str_6:  .asciiz   "\n"
+str_7:  .asciiz   "Calculate "
 str_9:  .asciiz   "\n"
-str_10:  .asciiz   "The end"
+str_10:  .asciiz   "Calculate "
+str_12:  .asciiz   "\n"
+str_13:  .asciiz   "Calculate "
+str_15:  .asciiz   "\n"
 
 
 .text 0x00400000
 
 # main function
+li $t0, 1
+sw $t0, 268500992($zero)
+li $t0, 2
+sw $t0, 268500996($zero)
+li $t0, 3
+sw $t0, 268501000($zero)
+li $t0, 4
+sw $t0, 268501004($zero)
+li $t0, 1
+sw $t0, 268501008($zero)
+li $t0, 2
+sw $t0, 268501012($zero)
+li $t0, 8
+sw $t0, 268501016($zero)
+li $t0, 5
+sw $t0, 268501020($zero)
+
+li $v0, 5
+syscall
+la $t9, global_var8
+sw $v0, 0($t9)
+
+li $v0, 5
+syscall
+sw $v0, 268501024($zero)
 la $a0, str_1
 li $v0, 4
 syscall
-li $t0, 1
-sw $t0, 268500992($zero)
-li $t0, 4
-lw $t1, 268500992($zero)
-mul $t2, $t0, $t1
-sw $t2, 268500996($zero)
-lw $t0, 268500996($zero)
-li $t1, 3
-divu $t0, $t1
-mfhi $t2
-sw $t2, 268501000($zero)
-li $t0, 1
-lw $t1, 268501000($zero)
-addu $t2, $t0, $t1
-sw $t2, 268501004($zero)
-lw $t0, 268501004($zero)
-la $t9, global_const_var0
-sw $t0, 0($t9)
-li $t0, 2
-sw $t0, 268501008($zero)
-lw $t0, 268501008($zero)
-la $t1, global_const_var1
-lw $t1, 0($t1)
-addu $t2, $t0, $t1
-sw $t2, 268501020($zero)
-lw $t0, 268501020($zero)
-la $t9, global_var0
-sw $t0, 0($t9)
-jal Label_1
-sw $v0, 268501024($zero)
-lw $t0, 268501024($zero)
-la $t9, global_const_var0
-sw $t0, 0($t9)
-
-
-# Pushing Function Real Params:
-addi $sp, $sp, -8
-lw $t0, 268501008($zero)
-sw $t0, 0($sp)
-la $t0, global_const_var1
-lw $t0, 0($t0)
-sw $t0, 4($sp)
-# Finished Pushing Params!
-
-jal Label_2
-addi $sp, $sp, 8
-sw $v0, 268501028($zero)
-lw $t0, 268501028($zero)
-la $t9, temp_var0
-sw $t0, 0($t9)
-
-
-# Pushing Function Real Params:
-addi $sp, $sp, -4
-la $t0, global_var2
-lw $t0, 0($t0)
-sw $t0, 0($sp)
-# Finished Pushing Params!
-
-jal Label_3
-addi $sp, $sp, 4
-la $a0, global_const_var1
+la $a0, global_var8
 lw $a0, 0($a0)
 li $v0, 1
 syscall
 la $a0, str_3
 li $v0, 4
 syscall
-lw $a0, 268501008($zero)
-li $v0, 1
-syscall
-la $a0, str_5
+la $a0, str_4
 li $v0, 4
 syscall
-lw $a0, 268501012($zero)
+lw $a0, 268501024($zero)
 li $v0, 1
 syscall
+la $a0, str_6
+li $v0, 4
+syscall
+lw $t0, 268501024($zero)
+li $t1, 1
+addu $t2, $t0, $t1
+sw $t2, 268501028($zero)
+li $t0, -1
+sw $t0, 268501032($zero)
+lw $t0, 268501028($zero)
+lw $t1, 268501032($zero)
+mul $t2, $t0, $t1
+sw $t2, 268501036($zero)
+lw $t0, 268501036($zero)
+sw $t0, 268501024($zero)
 la $a0, str_7
 li $v0, 4
 syscall
-la $a0, global_var2
-lw $a0, 0($a0)
+lw $a0, 268501024($zero)
 li $v0, 1
 syscall
 la $a0, str_9
 li $v0, 4
 syscall
+lw $t0, 268501024($zero)
+li $t1, 56
+addu $t2, $t0, $t1
+sw $t2, 268501040($zero)
+la $t0, global_var8
+lw $t0, 0($t0)
+li $t1, 9
+mul $t2, $t0, $t1
+sw $t2, 268501044($zero)
+lw $t0, 268501040($zero)
+lw $t1, 268501044($zero)
+subu $t2, $t0, $t1
+sw $t2, 268501048($zero)
+lw $t0, 268501048($zero)
+sw $t0, 268501024($zero)
 la $a0, str_10
+li $v0, 4
+syscall
+lw $a0, 268501024($zero)
+li $v0, 1
+syscall
+la $a0, str_12
+li $v0, 4
+syscall
+li $t0, -1
+sw $t0, 268501052($zero)
+lw $t0, 268501024($zero)
+lw $t1, 268501052($zero)
+addu $t2, $t0, $t1
+sw $t2, 268501056($zero)
+lw $t0, 268501056($zero)
+sw $t0, 268501024($zero)
+la $a0, str_13
+li $v0, 4
+syscall
+lw $a0, 268501024($zero)
+li $v0, 1
+syscall
+la $a0, str_15
 li $v0, 4
 syscall
 
@@ -121,43 +156,4 @@ syscall
 
 
 # self defined functions
-
-Label_1:
-
-li $t0, 10
-la $t9, temp_var0
-sw $t0, 0($t9)
-la $t0, global_var2
-lw $t0, 0($t0)
-li $t1, 1
-addu $t2, $t0, $t1
-sw $t2, 268501032($zero)
-lw $v0, 268501032($zero)
-jr $ra
-
-
-
-Label_2:
-
-lw $t0, 0($sp)
-lw $t1, 4($sp)
-addu $t2, $t0, $t1
-sw $t2, 268501032($zero)
-lw $v0, 268501032($zero)
-jr $ra
-
-
-
-Label_3:
-
-lw $t0, 0($sp)
-li $t1, 1
-addu $t2, $t0, $t1
-sw $t2, 268501032($zero)
-lw $t0, 268501032($zero)
-la $t9, global_var0
-sw $t0, 0($t9)
-jr $ra
-
-
 

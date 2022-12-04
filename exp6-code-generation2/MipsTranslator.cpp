@@ -75,6 +75,9 @@ void MipsTranslator::translate() {
     i++;
     mipsOutput << "\n\n.text 0x00400000\n\n# main function\n";
     while (i < mainEntryNum) {
+#ifdef MIPS_DEBUG
+        mipsOutput << std::flush;
+#endif
         ICEntry *entry = mainStream->at(i);
         ICItem *op1 = entry->operator1, *op2 = entry->operator2, *op3 = entry->operator3;
         const int opNum = entry->opNum;
@@ -141,7 +144,7 @@ void MipsTranslator::translate() {
                 jal(calledFunc);
                 if (paramNum > 0) {
                     // 注：数组传参只传首地址，仍只占4字节，故不需要改
-                    addi(Reg::$sp, Reg::$sp, paramNum * 4);
+                    addiu(Reg::$sp, Reg::$sp, paramNum * 4);
                 }
                 popTempReg();
                 break;
@@ -282,7 +285,7 @@ void MipsTranslator::translate() {
             case ICEntryType::Neg: {
                 auto *dst = (ICItemVar *) op1, *src = (ICItemVar *) op2;
                 if (src->isConst) {
-                    li(Reg::$t0, src->value);
+                    li(Reg::$t0, -src->value);
                     sw(Reg::$t0, dst);
                 } else {
                     lw(Reg::$t0, src);
@@ -294,7 +297,7 @@ void MipsTranslator::translate() {
             case ICEntryType::Not: {
                 auto *dst = (ICItemVar *) op1, *src = (ICItemVar *) op2;
                 if (src->isConst) {
-                    li(Reg::$t0, src->value);
+                    li(Reg::$t0, !src->value);
                     sw(Reg::$t0, dst);
                 } else {
                     lw(Reg::$t0, src);
@@ -468,6 +471,11 @@ void MipsTranslator::translate() {
                 }
                 break;
             }
+            case ICEntryType::JumpLabel: {
+                auto *label = (ICItemLabel *) op1;
+                j(label);
+                break;
+            }
             case ICEntryType::InsertLabel:
                 insertLabel((ICItemLabel *) op1);
                 break;
@@ -574,7 +582,7 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
                 }
                 jal(calledFunc);
                 if (paramNum > 0) {
-                    addi(Reg::$sp, Reg::$sp, paramNum * 4);
+                    addiu(Reg::$sp, Reg::$sp, paramNum * 4);
                 }
                 popTempReg();
                 break;
@@ -918,6 +926,11 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
                 }
                 break;
             }
+            case ICEntryType::JumpLabel: {
+                auto *label = (ICItemLabel *) op1;
+                j(label);
+                break;
+            }
             case ICEntryType::InsertLabel:
                 insertLabel((ICItemLabel *) op1);
                 break;
@@ -933,7 +946,7 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
 int MipsTranslator::pushParams(const std::vector<ICItem *> *params) {
     mipsOutput << "\n\n# Pushing Function Real Params:\n";
     const int num = params->size();
-    addi(Reg::$sp, Reg::$sp, -num * 4);
+    addiu(Reg::$sp, Reg::$sp, -num * 4);
     int offset = 0;
     for (const ICItem *param: *params) {
         if (param->type == ICItemType::Imm) {
@@ -1065,7 +1078,7 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var) {
                         lw(reg, 0, reg);
                     } else if (isFuncFParam(array1Item)) {
                         addr = funcFParamId2offset.find(array1Item->arrayId)->second;
-                        addi(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
+                        addiu(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
                         lw(reg, addr, Reg::$sp);
                     } else {
                         if (array1Item->isTemp) {
@@ -1073,7 +1086,7 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var) {
                         } else {
                             addr = localArrayId2mem.find(array1Item->arrayId)->second;
                         }
-                        addi(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
+                        addiu(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
                         lw(reg, addr, Reg::$zero);
                     }
                     return;
@@ -1092,7 +1105,7 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var) {
                         lw(reg, 0, reg);
                     } else if (isFuncFParam(array2Item)) {
                         addr = funcFParamId2offset.find(array2Item->arrayId)->second;
-                        addi(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
+                        addiu(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
                         lw(reg, addr, Reg::$sp);
                     } else {
                         if (array2Item->isTemp) {
@@ -1100,7 +1113,7 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var) {
                         } else {
                             addr = localArrayId2mem.find(array2Item->arrayId)->second;
                         }
-                        addi(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
+                        addiu(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
                         lw(reg, addr, Reg::$zero);
                     }
                     return;
@@ -1145,7 +1158,7 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var) {
                         } else {
                             addr = localArrayId2mem.find(array2Item->arrayId)->second;
                         }
-                        addi(reg, Reg::$t9, addr);
+                        addiu(reg, Reg::$t9, addr);
                     }
 //                    mipsOutput << "# 实参类型：Array2_Array1，传入结束\n";
                     return;
@@ -1190,6 +1203,9 @@ void MipsTranslator::lw(Reg dst, int offset, Reg base) {
 void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
     int addr;
     ICItem *dstLVal = dst;
+    // [Exp];
+    // 例： 1-1;
+    if (dst == nullptr) return;
     if (dstLVal->lValReference != nullptr) {
         // dst 是 LVal
         ReferenceType referenceType = dstLVal->referenceType;
@@ -1197,6 +1213,7 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
 
         switch (referenceType) {
             case ReferenceType::Var: {
+                dst = (ICItemVar *) dstLVal;
                 if (dst->isGlobal) {
                     la(Reg::$t9, dst->toString());
                     sw(reg, 0, Reg::$t9);
@@ -1238,7 +1255,7 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
                     sw(reg, 0, Reg::$t9);
                 } else if (isFuncFParam(array1Item)) {
                     addr = funcFParamId2offset.find(array1Item->arrayId)->second;
-                    addi(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
+                    addiu(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
                     sw(reg, addr, Reg::$sp);
                 } else {
                     if (array1Item->isTemp) {
@@ -1246,7 +1263,7 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
                     } else {
                         addr = localArrayId2mem.find(array1Item->arrayId)->second;
                     }
-                    addi(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
+                    addiu(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
                     sw(reg, addr, Reg::$zero);
                 }
                 return;
@@ -1265,7 +1282,7 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
                     sw(reg, 0, Reg::$t9);
                 } else if (isFuncFParam(array2Item)) {
                     addr = funcFParamId2offset.find(array2Item->arrayId)->second;
-                    addi(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
+                    addiu(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
                     sw(reg, addr, Reg::$sp);
                 } else {
                     if (array2Item->isTemp) {
@@ -1273,7 +1290,7 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
                     } else {
                         addr = localArrayId2mem.find(array2Item->arrayId)->second;
                     }
-                    addi(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
+                    addiu(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
                     sw(reg, addr, Reg::$zero);
                 }
                 return;
@@ -1335,7 +1352,7 @@ void MipsTranslator::move(Reg dst, Reg src) {
 void MipsTranslator::pushTempReg() {  // t0 - t9, ra
     return;
     mipsOutput << "\n\n# store temp regs\n";
-    addi(Reg::$sp, Reg::$sp, -44);
+    addiu(Reg::$sp, Reg::$sp, -44);
     int offset = 0;
     for (const Reg reg: tempRegs) {
         sw(reg, offset, Reg::$sp);
@@ -1353,12 +1370,12 @@ void MipsTranslator::popTempReg() {
         offset += 4;
     }
     lw(Reg::$ra, offset, Reg::$sp);
-    addi(Reg::$sp, Reg::$sp, 44);
+    addiu(Reg::$sp, Reg::$sp, 44);
     mipsOutput << "\n\n";
 }
 
-void MipsTranslator::addi(Reg dst, Reg src, int i) {
-    mipsOutput << "addi " << reg2s.find(dst)->second << ", "
+void MipsTranslator::addiu(Reg dst, Reg src, int i) {
+    mipsOutput << "addiu " << reg2s.find(dst)->second << ", "
                << reg2s.find(src)->second << ", " << std::to_string(i) << "\n";
 }
 
@@ -1468,25 +1485,25 @@ void MipsTranslator::seq(Reg rd, Reg rs, Reg rt) {
 }
 
 void MipsTranslator::sle(Reg rd, Reg rs, Reg rt) {
-    mipsOutput << "seq " + reg2s.find(rd)->second <<
+    mipsOutput << "sle " + reg2s.find(rd)->second <<
                ", " << reg2s.find(rs)->second <<
                ", " << reg2s.find(rt)->second << "\n";
 }
 
 void MipsTranslator::slt(Reg rd, Reg rs, Reg rt) {
-    mipsOutput << "seq " + reg2s.find(rd)->second <<
+    mipsOutput << "slt " + reg2s.find(rd)->second <<
                ", " << reg2s.find(rs)->second <<
                ", " << reg2s.find(rt)->second << "\n";
 }
 
 void MipsTranslator::sge(Reg rd, Reg rs, Reg rt) {
-    mipsOutput << "seq " + reg2s.find(rd)->second <<
+    mipsOutput << "sge " + reg2s.find(rd)->second <<
                ", " << reg2s.find(rs)->second <<
                ", " << reg2s.find(rt)->second << "\n";
 }
 
 void MipsTranslator::sgt(Reg rd, Reg rs, Reg rt) {
-    mipsOutput << "seq " + reg2s.find(rd)->second <<
+    mipsOutput << "sgt " + reg2s.find(rd)->second <<
                ", " << reg2s.find(rs)->second <<
                ", " << reg2s.find(rt)->second << "\n";
 }

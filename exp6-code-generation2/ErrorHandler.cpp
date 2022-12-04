@@ -945,8 +945,11 @@ void ErrorHandler::check_Stmt(Node *stmt, bool inFuncBlock) {
         }
         checkErrorNode(last);
     } else if (first->is(Symbol::IFTK)) {  // Stmt → 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
+        const bool has_else = stmt->getChildrenNum() > 5;
 
+        ICItemLabel *endLabel;
         auto *jumpLabel = new ICItemLabel();
+
         ICItem *cond = new ICItemVar(IS_GLOBAL);
         this->check_Cond(stmt->getChildAt(2), cond);
 
@@ -954,9 +957,15 @@ void ErrorHandler::check_Stmt(Node *stmt, bool inFuncBlock) {
         checkErrorNode(stmt->getChildAt(3));  // ErrorType::MissingRPARENT
         this->check_Stmt(stmt->getChildAt(4));
 
+        if (has_else) {
+            endLabel = new ICItemLabel();
+            icTranslator->translate_JumpLabel(endLabel);
+        }
+
         icTranslator->translate_InsertLabel(jumpLabel);  // jumpLabel:
-        if (stmt->getChildrenNum() > 5) {
+        if (has_else) {
             this->check_Stmt(stmt->getChildAt(6));
+            icTranslator->translate_InsertLabel(endLabel);
         }
 
     } else if (first->is(Symbol::WHILETK)) {  // Stmt → 'while' '(' Cond ')' Stmt

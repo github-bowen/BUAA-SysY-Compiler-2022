@@ -39,6 +39,7 @@ enum class ICEntryType {
 
     Beqz,
     InsertLabel,
+    JumpLabel
 
 };
 

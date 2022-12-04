@@ -52,7 +52,7 @@ public:
 
     void popTempReg();
 
-    void addi(Reg dst, Reg src, int i);
+    void addiu(Reg dst, Reg src, int i);
 
     void jal(const ICItemFunc *calledFunc);
 
