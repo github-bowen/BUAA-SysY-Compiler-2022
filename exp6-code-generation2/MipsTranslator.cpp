@@ -5,6 +5,7 @@
 #include <string>
 
 extern std::ofstream mipsOutput;
+static bool inSelfDefinedFunc = false;
 
 MipsTranslator::MipsTranslator(ICTranslator *icTranslator)
         : icTranslator(icTranslator) {
@@ -498,7 +499,6 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
     funcFParamId2offset.clear();
     std::vector<ICItem *> *params = func->params;
     const int num = params->size();
-    const int oldTempStackAddressTop = tempStackAddressTop;
 
     int offset = 0;
     for (const ICItem *param: *params) {
@@ -937,7 +937,6 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
         }
         i++;
     }
-    tempStackAddressTop = oldTempStackAddressTop;
     if (!findReturn) jr();
     funcFParamId2offset.clear();
 }
