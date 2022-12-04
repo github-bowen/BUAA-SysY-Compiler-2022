@@ -138,9 +138,7 @@ void MipsTranslator::translate() {
             case ICEntryType::FuncCall: {
                 auto *calledFunc = (const ICItemFunc *) (entry->calledFunc);
                 pushTempReg();
-                if (entry->params != nullptr && !entry->params->empty()) {
-                    pushParams(entry->params);
-                }
+                pushParams(entry->params);
                 mipsOutput << "# Call function!\n";
                 jal(calledFunc);
                 lw(Reg::$ra, 0, Reg::$sp);
@@ -250,13 +248,13 @@ void MipsTranslator::translate() {
                 } else if (r1->isConst) {
                     li(Reg::$t0, r1->value);
                     lw(Reg::$t1, r2);
-                    divu(Reg::$t0, Reg::$t1);
+                    div(Reg::$t0, Reg::$t1);
                     mflo(Reg::$t2);
                     sw(Reg::$t2, dst);
                 } else {
                     lw(Reg::$t0, r1);
                     lw(Reg::$t1, r2);
-                    divu(Reg::$t0, Reg::$t1);
+                    div(Reg::$t0, Reg::$t1);
                     mflo(Reg::$t2);
                     sw(Reg::$t2, dst);
                 }
@@ -271,13 +269,13 @@ void MipsTranslator::translate() {
                 } else if (r1->isConst) {
                     li(Reg::$t0, r1->value);
                     lw(Reg::$t1, r2);
-                    divu(Reg::$t0, Reg::$t1);
+                    div(Reg::$t0, Reg::$t1);
                     mfhi(Reg::$t2);
                     sw(Reg::$t2, dst);
                 } else {
                     lw(Reg::$t0, r1);
                     lw(Reg::$t1, r2);
-                    divu(Reg::$t0, Reg::$t1);
+                    div(Reg::$t0, Reg::$t1);
                     mfhi(Reg::$t2);
                     sw(Reg::$t2, dst);
                 }
@@ -584,9 +582,7 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
             case ICEntryType::FuncCall: {
                 auto *calledFunc = (const ICItemFunc *) (entry->calledFunc);
                 pushTempReg();
-                if (entry->params != nullptr && !entry->params->empty()) {
-                    pushParams(entry->params);
-                }
+                pushParams(entry->params);
                 mipsOutput << "# Call function!\n";
                 jal(calledFunc);
                 lw(Reg::$ra, 0, Reg::$sp);
@@ -707,13 +703,13 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
                 } else if (r1->isConst) {
                     li(Reg::$t0, r1->value);
                     lw(Reg::$t1, r2);
-                    divu(Reg::$t0, Reg::$t1);
+                    div(Reg::$t0, Reg::$t1);
                     mflo(Reg::$t2);
                     sw(Reg::$t2, dst);
                 } else {
                     lw(Reg::$t0, r1);
                     lw(Reg::$t1, r2);
-                    divu(Reg::$t0, Reg::$t1);
+                    div(Reg::$t0, Reg::$t1);
                     mflo(Reg::$t2);
                     sw(Reg::$t2, dst);
                 }
@@ -728,13 +724,13 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
                 } else if (r1->isConst) {
                     li(Reg::$t0, r1->value);
                     lw(Reg::$t1, r2);
-                    divu(Reg::$t0, Reg::$t1);
+                    div(Reg::$t0, Reg::$t1);
                     mfhi(Reg::$t2);
                     sw(Reg::$t2, dst);
                 } else {
                     lw(Reg::$t0, r1);
                     lw(Reg::$t1, r2);
-                    divu(Reg::$t0, Reg::$t1);
+                    div(Reg::$t0, Reg::$t1);
                     mfhi(Reg::$t2);
                     sw(Reg::$t2, dst);
                 }
@@ -755,7 +751,7 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
             case ICEntryType::Neg: {
                 auto *dst = (ICItemVar *) op1, *src = (ICItemVar *) op2;
                 if (src->isConst) {
-                    li(Reg::$t0, src->value);
+                    li(Reg::$t0, -src->value);
                     sw(Reg::$t0, dst);
                 } else {
                     lw(Reg::$t0, src);
@@ -961,6 +957,7 @@ void MipsTranslator::pushParams(const std::vector<ICItem *> *params) {
     addiu(Reg::$sp, Reg::$sp, -1000);
     sw(Reg::$ra, 0, Reg::$sp);
     int offset = 4;
+    if (params == nullptr || params->empty()) return;
     for (const ICItem *param: *params) {
         if (param->type == ICItemType::Imm) {
             auto *imm = (ICItemImm *) param;
@@ -1627,8 +1624,8 @@ void MipsTranslator::mul(Reg dst, Reg srcReg, int srcNum) {
                ", " << srcNum << "\n";
 }
 
-void MipsTranslator::divu(Reg rs, Reg rt) {
-    mipsOutput << "divu " + reg2s.find(rs)->second <<
+void MipsTranslator::div(Reg rs, Reg rt) {
+    mipsOutput << "div " + reg2s.find(rs)->second <<
                ", " << reg2s.find(rt)->second << "\n";
 }
 

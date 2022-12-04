@@ -100,7 +100,7 @@ public:
 
     void mul(Reg dst, Reg srcReg, int srcNum);
 
-    void divu(Reg rs, Reg rt);
+    void div(Reg rs, Reg rt);
 
     void mfhi(Reg reg);
 

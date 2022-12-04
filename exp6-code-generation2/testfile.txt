@@ -1,8 +1,7 @@
-int f(int i) {
-    return 1;
-}
-
 int main() {
-    printf("%d", f(f(1)));
+
+    printf("%d", -4 / 2);
+
     return 0;
 }
+

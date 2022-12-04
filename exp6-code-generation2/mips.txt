@@ -8,36 +8,13 @@ temp:  .space  160000
 .text 0x00400000
 
 # main function
-
-
-# Pushing Function Real Params:
-addiu $sp, $sp, -1000
-sw $ra, 0($sp)
-li $t0, 1
-sw $t0, 4($sp)
-# Finished Pushing Params!
-# Call function!
-jal Label_1
-lw $ra, 0($sp)
-# Pop params
-addiu $sp, $sp, 1000
-
-sw $v0, 268500992($zero)
-
-
-# Pushing Function Real Params:
-addiu $sp, $sp, -1000
-sw $ra, 0($sp)
+li $t0, -4
+sw $t0, 268500992($zero)
 lw $t0, 268500992($zero)
-sw $t0, 4($sp)
-# Finished Pushing Params!
-# Call function!
-jal Label_1
-lw $ra, 0($sp)
-# Pop params
-addiu $sp, $sp, 1000
-
-sw $v0, 268500996($zero)
+li $t1, 2
+div $t0, $t1
+mflo $t2
+sw $t2, 268500996($zero)
 lw $a0, 268500996($zero)
 li $v0, 1
 syscall
@@ -49,11 +26,4 @@ syscall
 
 
 # self defined functions
-
-Label_1:
-
-li $v0, 1
-jr $ra
-
-
 
