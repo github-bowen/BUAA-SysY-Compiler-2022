@@ -125,7 +125,8 @@ int SymbolTableEntry::array2get(int i1, int i2) const {
 
 bool SymbolTableEntry::hasSameType(SymbolTableEntry *realParam, FuncParam *funcParam) {
     if (realParam->getActualType() == SymbolTableEntryType::Var ||
-        realParam->getActualType() == SymbolTableEntryType::VarConst) {  // 变量
+        realParam->getActualType() == SymbolTableEntryType::VarConst ||
+        realParam->type == SymbolTableEntryType::FunctionOfInt) {  // 变量
         return funcParam->type == 0;
     }
     if (realParam->getActualType() == SymbolTableEntryType::Array1 ||
