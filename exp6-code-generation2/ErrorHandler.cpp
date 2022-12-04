@@ -7,6 +7,7 @@
 #include <string>
 #include <iostream>
 #include <cstring>
+#include "item/WhileBlock.h"
 #include "_debug.h"
 
 #define IS_GLOBAL ((currentTable->isRoot))
@@ -14,7 +15,7 @@
 extern std::map<int, std::string> errorLog;
 
 static bool createSymbolTableBeforeEnterBlock = false;
-static int inWhile = 0;
+static WhileBlock *currentWhileBlock = new WhileBlock;
 enum class Func {
     IntFunc,
     VoidFunc,
@@ -973,23 +974,33 @@ void ErrorHandler::check_Stmt(Node *stmt, bool inFuncBlock) {
         auto *whileStartLabel = new ICItemLabel(), *whileEndLabel = new ICItemLabel();
         icTranslator->translate_InsertLabel(whileStartLabel);
 
+        auto *newWhileBlock = new WhileBlock(currentWhileBlock, whileStartLabel, whileEndLabel);
+        currentWhileBlock->child = newWhileBlock;
+        currentWhileBlock = newWhileBlock;
+
         ICItem *cond = new ICItemVar(IS_GLOBAL);
         this->check_Cond(stmt->getChildAt(2), cond);
 
         icTranslator->translate_Beqz(cond, whileEndLabel);  // beqz cond, whileEndLabel
         checkErrorNode(stmt->getChildAt(3));  // ErrorType::MissingRPARENT
 
-        inWhile++;
         this->check_Stmt(stmt->getChildAt(4));
-        inWhile--;
 
-        icTranslator->translate_InsertLabel(whileEndLabel);
+        icTranslator->translate_JumpLabel(currentWhileBlock->whileStartLabel);
+        icTranslator->translate_InsertLabel(currentWhileBlock->whileEndLabel);
+
+        currentWhileBlock = currentWhileBlock->parent;
 
     } else if (first->is(Symbol::BREAKTK) || first->is(Symbol::CONTINUETK)) {
-        if (!inWhile) {
+        if (!currentWhileBlock->inWhile()) {
             errorLog.insert(
                     {first->getToken()->lineNumber,
                      errorType2string.find(ErrorType::RedundantBreakContinue)->second});
+        }
+        if (first->is(Symbol::BREAKTK)) {
+            icTranslator->translate_JumpLabel(currentWhileBlock->whileEndLabel);
+        } else {
+            icTranslator->translate_JumpLabel(currentWhileBlock->whileStartLabel);
         }
         checkErrorNode(last);  // ErrorType::MissingSEMICN
     } else if (first->is(Symbol::RETURNTK)) {  // 'return' [Exp] ';'

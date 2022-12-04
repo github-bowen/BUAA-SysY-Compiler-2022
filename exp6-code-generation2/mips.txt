@@ -2,152 +2,271 @@
 temp:  .space  160000
 
 
-# ZERO
-global_const_var1:  .word  0
+#global_var1
+global_var1: .word  9
 
-# ONE
-global_const_var2:  .word  1
+#global_var2
+global_var2: .word  0
 
-# TWO
-global_const_var3:  .word  2
+#global_var3
+global_var3: .word  10
 
-# THREE
-global_const_var4:  .word  3
+# con1
+global_const_var4:  .word  44
 
-#one
-global_var5: .word  1
+# con2
+global_const_var5:  .word  678
 
-#two
-global_var6: .word  2
-
-#three
-global_var7: .word  3
-
-#gvar
-global_var8: .word  0
+# con4
+global_const_var6:  .word  888
 
 # string tokens: 
-str_1:  .asciiz   "Set global variable as "
-str_3:  .asciiz   "\n"
-str_4:  .asciiz   "Set local variable as "
-str_6:  .asciiz   "\n"
-str_7:  .asciiz   "Calculate "
-str_9:  .asciiz   "\n"
-str_10:  .asciiz   "Calculate "
-str_12:  .asciiz   "\n"
-str_13:  .asciiz   "Calculate "
-str_15:  .asciiz   "\n"
+str_1:  .asciiz   "(20373335)\n"
+str_2:  .asciiz   "C level,test a code has decl,no func\n"
+str_3:  .asciiz   "con1 is "
+str_5:  .asciiz   "\n"
+str_6:  .asciiz   "con2 is "
+str_8:  .asciiz   ",con3 is "
+str_10:  .asciiz   "\n"
+str_11:  .asciiz   "the left val is "
+str_13:  .asciiz   "\n"
+str_14:  .asciiz   "var1 greater than 1\n"
+str_15:  .asciiz   "var5 equal to con1\n"
 
 
 .text 0x00400000
 
 # main function
-li $t0, 1
+li $t0, 61
 sw $t0, 268500992($zero)
-li $t0, 2
-sw $t0, 268500996($zero)
-li $t0, 3
-sw $t0, 268501000($zero)
-li $t0, 4
-sw $t0, 268501004($zero)
-li $t0, 1
-sw $t0, 268501008($zero)
-li $t0, 2
-sw $t0, 268501012($zero)
-li $t0, 8
-sw $t0, 268501016($zero)
-li $t0, 5
-sw $t0, 268501020($zero)
-
-li $v0, 5
-syscall
-la $t9, global_var8
-sw $v0, 0($t9)
-
-li $v0, 5
-syscall
-sw $v0, 268501024($zero)
 la $a0, str_1
 li $v0, 4
 syscall
-la $a0, global_var8
-lw $a0, 0($a0)
-li $v0, 1
+la $a0, str_2
+li $v0, 4
 syscall
 la $a0, str_3
 li $v0, 4
 syscall
-la $a0, str_4
-li $v0, 4
-syscall
-lw $a0, 268501024($zero)
+la $a0, global_const_var4
+lw $a0, 0($a0)
 li $v0, 1
+syscall
+la $a0, str_5
+li $v0, 4
 syscall
 la $a0, str_6
 li $v0, 4
 syscall
-lw $t0, 268501024($zero)
-li $t1, 1
-addu $t2, $t0, $t1
-sw $t2, 268501028($zero)
-li $t0, -1
-sw $t0, 268501032($zero)
-lw $t0, 268501028($zero)
-lw $t1, 268501032($zero)
-mul $t2, $t0, $t1
-sw $t2, 268501036($zero)
-lw $t0, 268501036($zero)
-sw $t0, 268501024($zero)
-la $a0, str_7
-li $v0, 4
-syscall
-lw $a0, 268501024($zero)
+la $a0, global_const_var5
+lw $a0, 0($a0)
 li $v0, 1
 syscall
-la $a0, str_9
+la $a0, str_8
 li $v0, 4
 syscall
-lw $t0, 268501024($zero)
-li $t1, 56
-addu $t2, $t0, $t1
-sw $t2, 268501040($zero)
-la $t0, global_var8
-lw $t0, 0($t0)
-li $t1, 9
-mul $t2, $t0, $t1
-sw $t2, 268501044($zero)
-lw $t0, 268501040($zero)
-lw $t1, 268501044($zero)
-subu $t2, $t0, $t1
-sw $t2, 268501048($zero)
-lw $t0, 268501048($zero)
-sw $t0, 268501024($zero)
+li $a0, 61
+li $v0, 1
+syscall
 la $a0, str_10
 li $v0, 4
 syscall
-lw $a0, 268501024($zero)
-li $v0, 1
+li $t0, 61
+sw $t0, 268501000($zero)
+
+li $v0, 5
 syscall
-la $a0, str_12
+sw $v0, 268501004($zero)
+lw $t0, 268501004($zero)
+lw $t1, 268501000($zero)
+mul $t2, $t0, $t1
+sw $t2, 268501008($zero)
+lw $t0, 268501000($zero)
+lw $t1, 268501008($zero)
+subu $t2, $t0, $t1
+sw $t2, 268501012($zero)
+la $t0, global_const_var5
+lw $t0, 0($t0)
+lw $t1, 268501004($zero)
+mul $t2, $t0, $t1
+sw $t2, 268501016($zero)
+la $t0, global_const_var4
+lw $t0, 0($t0)
+li $t1, 61
+addu $t2, $t0, $t1
+sw $t2, 268501020($zero)
+lw $t0, 268501016($zero)
+lw $t1, 268501020($zero)
+divu $t0, $t1
+mfhi $t2
+sw $t2, 268501024($zero)
+lw $t0, 268501012($zero)
+lw $t1, 268501024($zero)
+addu $t2, $t0, $t1
+sw $t2, 268501028($zero)
+lw $t0, 268501028($zero)
+sw $t0, 268500996($zero)
+la $a0, str_11
 li $v0, 4
 syscall
-li $t0, -1
-sw $t0, 268501052($zero)
-lw $t0, 268501024($zero)
-lw $t1, 268501052($zero)
-addu $t2, $t0, $t1
-sw $t2, 268501056($zero)
-lw $t0, 268501056($zero)
-sw $t0, 268501024($zero)
+lw $a0, 268500996($zero)
+li $v0, 1
+syscall
 la $a0, str_13
 li $v0, 4
 syscall
-lw $a0, 268501024($zero)
-li $v0, 1
+lw $t0, 268501004($zero)
+lw $t1, 268501000($zero)
+mul $t2, $t0, $t1
+sw $t2, 268501032($zero)
+lw $t0, 268501000($zero)
+lw $t1, 268501032($zero)
+subu $t2, $t0, $t1
+sw $t2, 268501036($zero)
+la $t0, global_const_var5
+lw $t0, 0($t0)
+lw $t1, 268501004($zero)
+mul $t2, $t0, $t1
+sw $t2, 268501040($zero)
+la $t0, global_const_var4
+lw $t0, 0($t0)
+li $t1, 61
+addu $t2, $t0, $t1
+sw $t2, 268501044($zero)
+lw $t0, 268501040($zero)
+lw $t1, 268501044($zero)
+divu $t0, $t1
+mfhi $t2
+sw $t2, 268501048($zero)
+lw $t0, 268501036($zero)
+lw $t1, 268501048($zero)
+addu $t2, $t0, $t1
+la $t0, global_const_var4
+lw $t0, 0($t0)
+subu $t0, $zero, $t0
+sw $t0, 268501052($zero)
+lw $t0, 268501052($zero)
+subu $t0, $zero, $t0
+sw $t0, 268501056($zero)
+lw $t0, 268501056($zero)
+subu $t0, $zero, $t0
+sw $t0, 268501060($zero)
+lw $t0, 268501060($zero)
+sw $t0, 268501064($zero)
+lw $t0, 268500996($zero)
+li $t1, 1
+sgt $t2, $t0, $t1
+sw $t2, 268501068($zero)
+lw $t0, 268501068($zero)
+beqz $t0, Label_1
+la $a0, str_14
+li $v0, 4
 syscall
+Label_1:
+li $t0, 61
+li $t1, 0
+sge $t2, $t0, $t1
+sw $t2, 268501072($zero)
+lw $t0, 268501072($zero)
+beqz $t0, Label_2
+lw $t0, 268500996($zero)
+la $t1, global_const_var4
+lw $t1, 0($t1)
+divu $t0, $t1
+mflo $t2
+sw $t2, 268501076($zero)
+lw $t0, 268501000($zero)
+li $t1, 1225
+mul $t2, $t0, $t1
+sw $t2, 268501080($zero)
+lw $t0, 268501076($zero)
+lw $t1, 268501080($zero)
+addu $t2, $t0, $t1
+sw $t2, 268501084($zero)
+lw $t0, 268501084($zero)
+sw $t0, 268501004($zero)
+j Label_3
+Label_2:
+lw $t0, 268501000($zero)
+la $t1, global_const_var6
+lw $t1, 0($t1)
+slt $t2, $t0, $t1
+sw $t2, 268501088($zero)
+lw $t0, 268501088($zero)
+beqz $t0, Label_4
+
+li $v0, 5
+syscall
+sw $v0, 268501000($zero)
+Label_4:
+Label_3:
+lw $t0, 268501064($zero)
+la $t1, global_const_var6
+lw $t1, 0($t1)
+sle $t2, $t0, $t1
+sw $t2, 268501092($zero)
+lw $t0, 268501092($zero)
+beqz $t0, Label_5
+lw $t0, 268501064($zero)
+la $t1, global_const_var4
+lw $t1, 0($t1)
+seq $t2, $t0, $t1
+sw $t2, 268501096($zero)
+lw $t0, 268501096($zero)
+beqz $t0, Label_6
 la $a0, str_15
 li $v0, 4
 syscall
+Label_6:
+li $t0, 23
+sw $t0, 268501100($zero)
+li $t0, 385
+sw $t0, 268501104($zero)
+lw $t0, 268501104($zero)
+li $t1, 9
+divu $t0, $t1
+mfhi $t2
+sw $t2, 268501108($zero)
+lw $t0, 268501100($zero)
+lw $t1, 268501108($zero)
+subu $t2, $t0, $t1
+sw $t2, 268501112($zero)
+li $t0, 3
+sw $t0, 268501116($zero)
+lw $t0, 268501112($zero)
+lw $t1, 268501116($zero)
+addu $t2, $t0, $t1
+sw $t2, 268501120($zero)
+lw $t0, 268501120($zero)
+li $t1, 24
+sle $t2, $t0, $t1
+sw $t2, 268501124($zero)
+li $t0, 23
+lw $t1, 268501124($zero)
+sne $t2, $t0, $t1
+sw $t2, 268501128($zero)
+lw $t0, 268501128($zero)
+beqz $t0, Label_7
+Label_7:
+Label_5:
+Label_8:
+li $t0, 56
+sw $t0, 268501132($zero)
+li $t0, 0
+sw $t0, 268501136($zero)
+lw $t0, 268501136($zero)
+lw $t1, 268501132($zero)
+sle $t2, $t0, $t1
+sw $t2, 268501140($zero)
+lw $t0, 268501140($zero)
+beqz $t0, Label_10
+j Label_9
+j Label_11
+Label_10:
+j Label_8
+Label_11:
+j Label_8
+Label_9:
 
 li $v0, 10
 syscall
