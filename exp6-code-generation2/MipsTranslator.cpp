@@ -151,7 +151,7 @@ void MipsTranslator::translate() {
             case ICEntryType::MainFuncEnd:
                 exit();
                 break;
-            case ICEntryType::Getint: {  // TODO: LVal！！！！！！！！！！！
+            case ICEntryType::Getint: {
                 auto *dst = ((ICItemVar *) op1);
                 getint(dst);
                 break;
@@ -170,7 +170,7 @@ void MipsTranslator::translate() {
                 }
                 break;
             }
-            case ICEntryType::Assign: {  // TODO: LVal！！！！！！！！！！！
+            case ICEntryType::Assign: {
                 auto *left = (ICItemVar *) op1, *right = (ICItemVar *) op2;
                 if (right == nullptr) {  // 从函数返回后赋值
                     sw(Reg::$v0, left);
@@ -279,26 +279,9 @@ void MipsTranslator::translate() {
                 }
                 break;
             }
-            case ICEntryType::Not:
-                break;
-            case ICEntryType::Neg: {
-                auto *dst = (ICItemVar *) op1, *src = (ICItemVar *) op2;
-                if (src->isConst) {
-                    li(Reg::$t0, src->value);
-                    sw(Reg::$t0, dst);
-                } else {
-                    lw(Reg::$t0, src);
-                    subu(Reg::$t0, Reg::$zero, Reg::$t0);
-                    sw(Reg::$t0, dst);
-                }
-                break;
+            case ICEntryType::Not: {
+
             }
-            case ICEntryType::ArrayGet:
-                break;
-            case ICEntryType::FuncDefine:
-                break;
-            case ICEntryType::MainFuncStart:
-                break;
             case ICEntryType::Or:
                 break;
             case ICEntryType::And:
@@ -315,6 +298,20 @@ void MipsTranslator::translate() {
                 break;
             case ICEntryType::GreaterEqual:
                 break;
+            case ICEntryType::Neg: {
+                auto *dst = (ICItemVar *) op1, *src = (ICItemVar *) op2;
+                if (src->isConst) {
+                    li(Reg::$t0, src->value);
+                    sw(Reg::$t0, dst);
+                } else {
+                    lw(Reg::$t0, src);
+                    subu(Reg::$t0, Reg::$zero, Reg::$t0);
+                    sw(Reg::$t0, dst);
+                }
+                break;
+            }
+//            case ICEntryType::FuncDefine:
+//            case ICEntryType::MainFuncStart:
             case ICEntryType::Beq:
                 break;
             case ICEntryType::InsertLabel:
@@ -338,10 +335,16 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
     const int num = params->size();
 
     int offset = 0;
-    for (const auto *param: *params) {
-        auto *var = ((ICItemVar *) param);
-        funcFParamId2offset.insert({var->varId, offset});
-        offset += 4;
+    for (const ICItem *param: *params) {
+        if (param->type == ICItemType::Var) {
+            auto *var = ((ICItemVar *) param);
+            funcFParamId2offset.insert({var->varId, offset});  // varId 为负数
+            offset += 4;
+        } else {
+            auto *array = (ICItemArray *) param;
+            funcFParamId2offset.insert({array->arrayId, offset});  // arrayId 为正数
+            offset += 4;
+        }
     }
 
     std::vector<ICEntry *> *funcEntries = func->entries;
@@ -550,8 +553,6 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
                 }
                 break;
             }
-            case ICEntryType::ArrayGet:
-                break;
             case ICEntryType::FuncDefine:
                 break;
             case ICEntryType::MainFuncStart:
@@ -675,13 +676,14 @@ bool MipsTranslator::isFuncFParam(ICItemVar *var) {
     return funcFParamId2offset.find(var->varId) != funcFParamId2offset.end();
 }
 
+bool MipsTranslator::isFuncFParam(ICItemArray *array) {
+    return funcFParamId2offset.find(array->arrayId) != funcFParamId2offset.end();
+}
+
 void MipsTranslator::lw(Reg reg, ICItemVar *var) {
     int addr;
     ICItem *referenceItem = var;
     if (referenceItem->lValReference != nullptr) {  // var 为 LVal
-//        while (referenceItem->lValReference != nullptr) {
-//            referenceItem = referenceItem->lValReference;
-//        }
         ReferenceType referenceType = referenceItem->referenceType;
         referenceItem = referenceItem->lValReference;
         if (referenceItem->type == ICItemType::Imm) {
@@ -711,12 +713,26 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var) {
                 }
                 case ReferenceType::Array1_Var: {
                     ICItem *offsetItem = referenceItem->array1_var_index;
-                    lw(Reg::$t9, (ICItemVar *) offsetItem);  // $t8 = 数组下标
+                    lw(Reg::$t9, (ICItemVar *) offsetItem);  // $t9 = 数组下标
                     sll(Reg::$t9, Reg::$t9, 2);  // t9 = t9 * 4
                     auto array1Item = (ICItemArray *) referenceItem;
-                    la(reg, array1Item->toString());
-                    addu(reg, reg, Reg::$t9);  // reg = reg + t8 = 基地址 + 偏移
-                    lw(reg, 0, reg);
+                    if (array1Item->isGlobal) {
+                        la(reg, array1Item->toString());
+                        addu(reg, reg, Reg::$t9);  // reg = reg + t9 = 基地址 + 偏移
+                        lw(reg, 0, reg);
+                    } else if (isFuncFParam(array1Item)) {
+                        addr = funcFParamId2offset.find(array1Item->arrayId)->second;
+                        addi(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
+                        lw(reg, addr, Reg::$sp);
+                    } else {
+                        if (array1Item->isTemp) {
+                            addr = tempArrayId2mem.find(array1Item->tempArrayId)->second;
+                        } else {
+                            addr = localArrayId2mem.find(array1Item->arrayId)->second;
+                        }
+                        addi(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
+                        lw(reg, addr, Reg::$zero);
+                    }
                     return;
                 }
                 case ReferenceType::Array2_Var: {
@@ -727,28 +743,68 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var) {
                     mul(Reg::$t9, Reg::$t9, Reg::$t8);
                     sll(Reg::$t9, Reg::$t9, 2);  // t9 = t9 * 4
                     auto array2Item = (ICItemArray *) referenceItem;
-                    la(reg, array2Item->toString());
-                    addu(reg, reg, Reg::$t9);  // reg = reg + t9 = 基地址 + 偏移
-                    lw(reg, 0, reg);
+                    if (array2Item->isGlobal) {
+                        la(reg, array2Item->toString());
+                        addu(reg, reg, Reg::$t9);  // reg = reg + t9 = 基地址 + 偏移
+                        lw(reg, 0, reg);
+                    } else if (isFuncFParam(array2Item)) {
+                        addr = funcFParamId2offset.find(array2Item->arrayId)->second;
+                        addi(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
+                        lw(reg, addr, Reg::$sp);
+                    } else {
+                        if (array2Item->isTemp) {
+                            addr = tempArrayId2mem.find(array2Item->tempArrayId)->second;
+                        } else {
+                            addr = localArrayId2mem.find(array2Item->arrayId)->second;
+                        }
+                        addi(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
+                        lw(reg, addr, Reg::$zero);
+                    }
                     return;
                 }
-                case ReferenceType::Array1:  // 传数组的首地址 TODO: 待处理从数组形参中 lw的情况
+                case ReferenceType::Array1:
                 case ReferenceType::Array2: {
                     auto arrayItem = (ICItemArray *) referenceItem;
-                    mipsOutput << "# 实参类型 Array2\n";
-                    la(reg, arrayItem->toString());
+//                    mipsOutput << "# 实参类型 Array2\n";
+                    if (arrayItem->isGlobal) {
+                        la(reg, arrayItem->toString());
+                    } else if (isFuncFParam(arrayItem)) {
+                        addr = funcFParamId2offset.find(arrayItem->arrayId)->second;
+                        lw(reg, addr, Reg::$sp);
+                    } else {
+                        if (arrayItem->isTemp) {
+                            addr = tempArrayId2mem.find(arrayItem->tempArrayId)->second;
+                        } else {
+                            addr = localArrayId2mem.find(arrayItem->arrayId)->second;
+                        }
+                        li(reg, addr);
+                    }
                     return;
                 }
-                case ReferenceType::Array2_Array1: {  // 传新数组的首地址 TODO: 待处理从数组形参中 lw的情况
+                case ReferenceType::Array2_Array1: {  // 传新数组的首地址
                     ICItem *offsetItem = referenceItem->array2_array1_index;
                     auto *array2Item = (ICItemArray *) referenceItem;
                     const int refArrayD2 = array2Item->originType.length2;  // 所引用数组的第二维长度
-                    mipsOutput << "# 实参类型：Array2_Array1，传入开始\n";
+//                    mipsOutput << "# 实参类型：Array2_Array1，传入开始\n";
                     lw(Reg::$t9, (ICItemVar *) offsetItem);  // $t9 = 数组下标
                     mul(Reg::$t9, Reg::$t9, refArrayD2);  // 实际上传入的数组参数的首地址相对于原数组首地址的偏移
-                    la(reg, array2Item->toString());
-                    addu(reg, reg, Reg::$t9);
-                    mipsOutput << "# 实参类型：Array2_Array1，传入结束\n";
+                    sll(Reg::$t9, Reg::$t9, 2);  // t9 = t9 * 4
+                    if (array2Item->isGlobal) {
+                        la(reg, array2Item->toString());
+                        addu(reg, reg, Reg::$t9);
+                    } else if (isFuncFParam(array2Item)) {
+                        addr = funcFParamId2offset.find(array2Item->arrayId)->second;
+                        lw(reg, addr, Reg::$sp);  // reg 为原数组首地址
+                        addu(reg, Reg::$t9, reg);
+                    } else {
+                        if (array2Item->isTemp) {
+                            addr = tempArrayId2mem.find(array2Item->tempArrayId)->second;
+                        } else {
+                            addr = localArrayId2mem.find(array2Item->arrayId)->second;
+                        }
+                        addi(reg, Reg::$t9, addr);
+                    }
+//                    mipsOutput << "# 实参类型：Array2_Array1，传入结束\n";
                     return;
                 }
                 case ReferenceType::Unset:
@@ -798,17 +854,58 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
 
         switch (referenceType) {
             case ReferenceType::Var: {
-                sw(reg, (ICItemVar *) dstLVal);
+                if (dst->isGlobal) {
+                    la(Reg::$t9, dst->toString());
+                    sw(reg, 0, Reg::$t9);
+                    return;
+                }
+                if (isFuncFParam(dst)) {
+                    addr = funcFParamId2offset.find(dst->varId)->second;
+                    sw(reg, addr, Reg::$sp);
+                    return;
+                }
+                if (dst->isTemp) {
+                    if (tempVarId2mem.find(dst->tempVarId) == tempVarId2mem.end()) {
+                        tempVarId2mem.insert({dst->tempVarId, tempStackAddressTop});
+                        addr = tempStackAddressTop;
+                        tempStackAddressTop += 4;
+                    } else {
+                        addr = tempVarId2mem.find(dst->tempVarId)->second;
+                    }
+                } else {
+                    if (localVarId2mem.find(dst->varId) == localVarId2mem.end()) {
+                        localVarId2mem.insert({dst->varId, tempStackAddressTop});
+                        addr = tempStackAddressTop;
+                        tempStackAddressTop += 4;
+                    } else {
+                        addr = localVarId2mem.find(dst->varId)->second;
+                    }
+                }
+                sw(reg, addr, Reg::$zero);
                 return;
             }
             case ReferenceType::Array1_Var: {  // 存到一维数组的某个元素里
                 ICItem *offsetItem = dstLVal->array1_var_index;
                 lw(Reg::$t9, (ICItemVar *) offsetItem);  // $t9 = 数组下标
-                sll(Reg::$t9, Reg::$t9, 2);  // t9 = t9 * 4
+                sll(Reg::$t9, Reg::$t9, 2);  // t9 = t9 * 4 偏移量
                 auto array1Item = (ICItemArray *) dstLVal;
-                la(Reg::$t8, array1Item->toString());
-                addu(reg, reg, Reg::$t9);  // reg = reg + t9 = 基地址 + 偏移
-                lw(reg, 0, reg);
+                if (array1Item->isGlobal) {
+                    la(Reg::$t8, array1Item->toString());  // t8 = 基地址
+                    addu(Reg::$t9, Reg::$t8, Reg::$t9);  // t9 = t8 + t9 = 基地址 + 偏移
+                    sw(reg, 0, Reg::$t9);
+                } else if (isFuncFParam(array1Item)) {
+                    addr = funcFParamId2offset.find(array1Item->arrayId)->second;
+                    addi(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
+                    sw(reg, addr, Reg::$sp);
+                } else {
+                    if (array1Item->isTemp) {
+                        addr = tempArrayId2mem.find(array1Item->tempArrayId)->second;
+                    } else {
+                        addr = localArrayId2mem.find(array1Item->arrayId)->second;
+                    }
+                    addi(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
+                    sw(reg, addr, Reg::$zero);
+                }
                 return;
             }
             case ReferenceType::Array2_Var: {
@@ -817,32 +914,30 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
                 lw(Reg::$t8, (ICItemVar *) offsetItem1);  // $t8 = 数组下标 1
                 lw(Reg::$t9, (ICItemVar *) offsetItem2);  // $t9 = 数组下标 2
                 mul(Reg::$t9, Reg::$t9, Reg::$t8);
-                sll(Reg::$t9, Reg::$t9, 2);  // t9 = t9 * 4
+                sll(Reg::$t9, Reg::$t9, 2);  // t9 = t9 * 4  总的偏移量
                 auto array2Item = (ICItemArray *) dstLVal;
-                la(reg, array2Item->toString());
-                addu(reg, reg, Reg::$t9);  // reg = reg + t9 = 基地址 + 偏移
-                lw(reg, 0, reg);
+                if (array2Item->isGlobal) {
+                    la(Reg::$t8, array2Item->toString());  // t8 基地址
+                    addu(Reg::$t9, Reg::$t8, Reg::$t9);  // t9 = t8 + t9 = 基地址 + 偏移
+                    sw(reg, 0, Reg::$t9);
+                } else if (isFuncFParam(array2Item)) {
+                    addr = funcFParamId2offset.find(array2Item->arrayId)->second;
+                    addi(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
+                    sw(reg, addr, Reg::$sp);
+                } else {
+                    if (array2Item->isTemp) {
+                        addr = tempArrayId2mem.find(array2Item->tempArrayId)->second;
+                    } else {
+                        addr = localArrayId2mem.find(array2Item->arrayId)->second;
+                    }
+                    addi(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
+                    sw(reg, addr, Reg::$zero);
+                }
                 return;
             }
-            case ReferenceType::Array1:  // 传数组的首地址 TODO: 待处理从数组形参中 lw的情况
-            case ReferenceType::Array2: {
-                auto arrayItem = (ICItemArray *) dstLVal;
-                mipsOutput << "# 实参类型 Array2\n";
-                la(reg, arrayItem->toString());
-                return;
-            }
-            case ReferenceType::Array2_Array1: {  // 传新数组的首地址 TODO: 待处理从数组形参中 lw的情况
-                ICItem *offsetItem = dstLVal->array2_array1_index;
-                auto *array2Item = (ICItemArray *) dstLVal;
-                const int refArrayD2 = array2Item->originType.length2;  // 所引用数组的第二维长度
-                mipsOutput << "# 实参类型：Array2_Array1，传入开始\n";
-                lw(Reg::$t9, (ICItemVar *) offsetItem);  // $t9 = 数组下标
-                mul(Reg::$t9, Reg::$t9, refArrayD2);  // 实际上传入的数组参数的首地址相对于原数组首地址的偏移
-                la(reg, array2Item->toString());
-                addu(reg, reg, Reg::$t9);
-                mipsOutput << "# 实参类型：Array2_Array1，传入结束\n";
-                return;
-            }
+            case ReferenceType::Array1:
+            case ReferenceType::Array2:
+            case ReferenceType::Array2_Array1:
             case ReferenceType::Unset:
                 throw std::runtime_error("\nError in MipsTranslator.cpp, line " +
                                          std::to_string(__LINE__) +
@@ -856,9 +951,9 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
         sw(reg, 0, Reg::$t9);
         return;
     }
-    if (isFuncFParam(dst)) {
+    if (isFuncFParam(dst)) {  // TODO 形参为数组
         addr = funcFParamId2offset.find(dst->varId)->second;
-        mipsOutput << "sw " << reg2s.find(reg)->second << ", " << addr << "($sp)\n";
+        sw(reg, addr, Reg::$sp);
         return;
     }
     if (dst->isTemp) {
@@ -878,7 +973,7 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
             addr = localVarId2mem.find(dst->varId)->second;
         }
     }
-    mipsOutput << "sw " << reg2s.find(reg)->second << ", " << addr << "($0)\n";
+    sw(reg, addr, Reg::$zero);
 }
 
 void MipsTranslator::sw(Reg src, int offset, Reg base) {
@@ -1009,8 +1104,9 @@ void MipsTranslator::sll(Reg dst, Reg src, int bits) {
                << reg2s.find(src)->second << ", " << bits << '\n';
 }
 
-
-
-
-
+void MipsTranslator::sne(Reg rd, Reg rs, Reg rt) {
+    mipsOutput << "sne " + reg2s.find(rd)->second <<
+               ", " << reg2s.find(rs)->second <<
+               ", " << reg2s.find(rt)->second << "\n";
+}
 

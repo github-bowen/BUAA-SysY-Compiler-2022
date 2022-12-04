@@ -14,9 +14,9 @@ public:
 
     std::map<int, int> tempVarId2mem;  // id 为正
 
-    std::map<int, int> localArrayId2mem;  // id 为负
+    std::map<int, int> localArrayId2mem;  // id 为正
 
-    std::map<int, int> tempArrayId2mem;  // id 为正
+    std::map<int, int> tempArrayId2mem;  // id 为负
 
     std::map<Reg, bool> regUsage;
 
@@ -89,6 +89,10 @@ public:
     void sll(Reg dst, Reg src, int bits);
 
     bool isFuncFParam(ICItemVar *var);
+
+    bool isFuncFParam(ICItemArray *array);
+
+    void sne(Reg rd, Reg rs, Reg rt);
 
 };
 

@@ -27,7 +27,6 @@ enum class ICEntryType {
     Mod,
     Not,
     Neg,
-    ArrayGet,
     // 第二次代码生成作业:
     Or,
     And,
