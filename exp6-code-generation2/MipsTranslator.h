@@ -9,7 +9,11 @@ class MipsTranslator {
 public:
     const int tempStackAddressBase = 268500992;  // 0x10010000
     int tempStackAddressTop = 268500992;
-
+    int tempFuncStackOffsetTop;
+    int tempFuncStackOffsetBase = 0;
+    /**
+     * main函数专用：存局部变量
+     */
     std::map<int, int> localVarId2mem;  // id 为负
 
     std::map<int, int> tempVarId2mem;  // id 为正
@@ -17,6 +21,19 @@ public:
     std::map<int, int> localArrayId2mem;  // id 为正
 
     std::map<int, int> tempArrayId2mem;  // id 为负
+
+    /**
+     * 自定义函数专用：存局部变量, offset 相对于当前函数栈的 $sp
+     */
+    std::map<int, int> localVarId2offset;  // id 为负
+
+    std::map<int, int> tempVarId2offset;  // id 为正
+
+    std::map<int, int> localArrayId2offset;  // id 为正
+
+    std::map<int, int> tempArrayId2offset;  // id 为负
+
+    //---------------------
 
     std::map<Reg, bool> regUsage;
 
@@ -34,9 +51,10 @@ public:
 
     void translate_GlobalVarOrArrayDef(ICEntry *);
 
-    int pushParams(const std::vector<ICItem *> *params);
+    void pushParams(const std::vector<ICItem *> *params);
 
-    void lw(Reg reg, ICItemVar *var);
+    // recursiveFormerOffset: 当在递归调用的压栈过程，从 $sp lw时要加1000
+    void lw(Reg reg, ICItemVar *var, bool whenPushingParamsRecursively = false);
 
     void lw(Reg dst, int offset, Reg base);
 
@@ -113,6 +131,8 @@ public:
     void _and(Reg rd, Reg rs, Reg rt);
 
     void insertLabel(ICItemLabel *label);
+
+    void clearLocalAndTempInFunc();
 
 };
 

@@ -14,7 +14,7 @@ ICItemVar::ICItemVar(const std::string *originalName, SymbolTableEntry *symbolTa
           isGlobal(isGlobal),
           isConst(isConst),
           varId(generateVarId()),
-          tempVarId(-1),
+          tempVarId(0),
           value(value),
           symbolTableEntry(symbolTableEntry),
           originalName(originalName),
@@ -32,7 +32,7 @@ ICItemVar::ICItemVar(bool isGlobal, int value)
           isConst(false),
           isGlobal(isGlobal),
           value(value),
-          varId(-1),
+          varId(0),
           tempVarId(generateTempVarId()),
           isTemp(true) {}
 
