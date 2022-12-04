@@ -56,6 +56,10 @@ public:
 
     void jal(const ICItemFunc *calledFunc);
 
+    void j(ICItemLabel *label);
+
+    void beqz(Reg cond, ICItemLabel *label);
+
     void exit();
 
     void getint(ICItemVar *dst);
@@ -93,6 +97,22 @@ public:
     bool isFuncFParam(ICItemArray *array);
 
     void sne(Reg rd, Reg rs, Reg rt);
+
+    void seq(Reg rd, Reg rs, Reg rt);
+
+    void sle(Reg rd, Reg rs, Reg rt);
+
+    void slt(Reg rd, Reg rs, Reg rt);
+
+    void sge(Reg rd, Reg rs, Reg rt);
+
+    void sgt(Reg rd, Reg rs, Reg rt);
+
+    void _or(Reg rd, Reg rs, Reg rt);
+
+    void _and(Reg rd, Reg rs, Reg rt);
+
+    void insertLabel(ICItemLabel *label);
 
 };
 

@@ -24,115 +24,66 @@ la $a0, str_1
 li $v0, 4
 syscall
 li $t0, 1
-sw $t0, 268500992($0)
+sw $t0, 268500992($zero)
 li $t0, 4
+lw $t1, 268500992($zero)
 mul $t2, $t0, $t1
-sw $t2, 268500996($0)
+sw $t2, 268500996($zero)
+lw $t0, 268500996($zero)
+li $t1, 3
 divu $t0, $t1
 mfhi $t2
-sw $t2, 268501000($0)
+sw $t2, 268501000($zero)
 li $t0, 1
+lw $t1, 268501000($zero)
 addu $t2, $t0, $t1
-sw $t2, 268501004($0)
-la $t9, global_var2
+sw $t2, 268501004($zero)
+lw $t0, 268501004($zero)
+la $t9, global_const_var0
 sw $t0, 0($t9)
-sw $t0, 268501008($0)
-lw $t0, 268501008($0)
+li $t0, 2
+sw $t0, 268501008($zero)
+lw $t0, 268501008($zero)
 la $t1, global_const_var1
 lw $t1, 0($t1)
 addu $t2, $t0, $t1
-sw $t2, 268501020($0)
-sw $t0, 268501012($0)
-
-
-# store temp regs
-addi $sp, $sp, -44
-sw $t0, 0($sp)
-sw $t1, 4($sp)
-sw $t2, 8($sp)
-sw $t9, 12($sp)
-sw $ra, 16($sp)
+sw $t2, 268501020($zero)
+lw $t0, 268501020($zero)
+la $t9, global_var0
+sw $t0, 0($t9)
 jal Label_1
-
-
-# recover temp regs
-lw $t0, 0($sp)
-lw $t1, 4($sp)
-lw $t2, 8($sp)
-lw $t9, 12($sp)
-lw $ra, 16($sp)
-addi $sp, $sp, 44
-
-
-sw $v0, 268501024($0)
-la $t9, global_var2
+sw $v0, 268501024($zero)
+lw $t0, 268501024($zero)
+la $t9, global_const_var0
 sw $t0, 0($t9)
 
 
-# store temp regs
-addi $sp, $sp, -44
-sw $t0, 0($sp)
-sw $t1, 4($sp)
-sw $t2, 8($sp)
-sw $t9, 12($sp)
-sw $ra, 16($sp)
-
-
-# store function params
+# Pushing Function Real Params:
 addi $sp, $sp, -8
-lw $t0, 268501008($0)
+lw $t0, 268501008($zero)
 sw $t0, 0($sp)
 la $t0, global_const_var1
 lw $t0, 0($t0)
 sw $t0, 4($sp)
-
+# Finished Pushing Params!
 
 jal Label_2
 addi $sp, $sp, 8
+sw $v0, 268501028($zero)
+lw $t0, 268501028($zero)
+la $t9, temp_var0
+sw $t0, 0($t9)
 
 
-# recover temp regs
-lw $t0, 0($sp)
-lw $t1, 4($sp)
-lw $t2, 8($sp)
-lw $t9, 12($sp)
-lw $ra, 16($sp)
-addi $sp, $sp, 44
-
-
-sw $v0, 268501028($0)
-sw $t0, 268501008($0)
-
-
-# store temp regs
-addi $sp, $sp, -44
-sw $t0, 0($sp)
-sw $t1, 4($sp)
-sw $t2, 8($sp)
-sw $t9, 12($sp)
-sw $ra, 16($sp)
-
-
-# store function params
+# Pushing Function Real Params:
 addi $sp, $sp, -4
 la $t0, global_var2
 lw $t0, 0($t0)
 sw $t0, 0($sp)
-
+# Finished Pushing Params!
 
 jal Label_3
 addi $sp, $sp, 4
-
-
-# recover temp regs
-lw $t0, 0($sp)
-lw $t1, 4($sp)
-lw $t2, 8($sp)
-lw $t9, 12($sp)
-lw $ra, 16($sp)
-addi $sp, $sp, 44
-
-
 la $a0, global_const_var1
 lw $a0, 0($a0)
 li $v0, 1
@@ -140,13 +91,13 @@ syscall
 la $a0, str_3
 li $v0, 4
 syscall
-lw $a0, 268501008($0)
+lw $a0, 268501008($zero)
 li $v0, 1
 syscall
 la $a0, str_5
 li $v0, 4
 syscall
-lw $a0, 268501012($0)
+lw $a0, 268501012($zero)
 li $v0, 1
 syscall
 la $a0, str_7
@@ -173,12 +124,15 @@ syscall
 
 Label_1:
 
-la $t9, global_var2
+li $t0, 10
+la $t9, temp_var0
 sw $t0, 0($t9)
 la $t0, global_var2
 lw $t0, 0($t0)
+li $t1, 1
 addu $t2, $t0, $t1
-sw $t2, 268501032($0)
+sw $t2, 268501032($zero)
+lw $v0, 268501032($zero)
 jr $ra
 
 
@@ -188,7 +142,8 @@ Label_2:
 lw $t0, 0($sp)
 lw $t1, 4($sp)
 addu $t2, $t0, $t1
-sw $t2, 268501036($0)
+sw $t2, 268501032($zero)
+lw $v0, 268501032($zero)
 jr $ra
 
 
@@ -196,9 +151,12 @@ jr $ra
 Label_3:
 
 lw $t0, 0($sp)
+li $t1, 1
 addu $t2, $t0, $t1
-sw $t2, 268501040($0)
-sw $t0, 0($sp)
+sw $t2, 268501032($zero)
+lw $t0, 268501032($zero)
+la $t9, global_var0
+sw $t0, 0($t9)
 jr $ra
 
 

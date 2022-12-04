@@ -193,13 +193,13 @@ void ICTranslator::translate_Array2Def(ICItem *initItem, bool isGlobal,
 void ICTranslator::translate_BinaryOperator(ICEntryType icEntryType,
                                             ICItem *dst, ICItem *src1, ICItem *src2) const {
     if (currentFunc == nullptr) {
-        if (icEntryType == ICEntryType::Assign || icEntryType == ICEntryType::Beq) {
+        if (icEntryType == ICEntryType::Assign || icEntryType == ICEntryType::Beqz) {
             mainEntries->push_back(new ICEntry(icEntryType, dst, src1));
         } else {
             mainEntries->push_back(new ICEntry(icEntryType, dst, src1, src2));
         }
     } else {
-        if (icEntryType == ICEntryType::Assign || icEntryType == ICEntryType::Beq) {
+        if (icEntryType == ICEntryType::Assign || icEntryType == ICEntryType::Beqz) {
             currentFunc->entries->push_back(new ICEntry(icEntryType, dst, src1));
         } else {
             currentFunc->entries->push_back(new ICEntry(icEntryType, dst, src1, src2));
@@ -272,11 +272,11 @@ void ICTranslator::translate_printf(std::vector<int> *indexOfPercentSign,
     }
 }
 
-void ICTranslator::translate_Beq(ICItem *condition, ICItemLabel *label) const {
+void ICTranslator::translate_Beqz(ICItem *condition, ICItemLabel *label) const {
     if (currentFunc == nullptr) {
-        mainEntries->push_back(new ICEntry(ICEntryType::Beq, condition, label));
+        mainEntries->push_back(new ICEntry(ICEntryType::Beqz, condition, label));
     } else {
-        currentFunc->entries->push_back(new ICEntry(ICEntryType::Beq, condition, label));
+        currentFunc->entries->push_back(new ICEntry(ICEntryType::Beqz, condition, label));
     }
 }
 

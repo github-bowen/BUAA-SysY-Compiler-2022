@@ -37,7 +37,7 @@ enum class ICEntryType {
     GreaterThan,
     GreaterEqual,
 
-    Beq,
+    Beqz,
     InsertLabel,
 
 };

@@ -950,7 +950,7 @@ void ErrorHandler::check_Stmt(Node *stmt, bool inFuncBlock) {
         ICItem *cond = new ICItemVar(IS_GLOBAL);
         this->check_Cond(stmt->getChildAt(2), cond);
 
-        icTranslator->translate_Beq(cond, jumpLabel);  // beq cond, jumpLabel
+        icTranslator->translate_Beqz(cond, jumpLabel);  // beqz cond, jumpLabel
         checkErrorNode(stmt->getChildAt(3));  // ErrorType::MissingRPARENT
         this->check_Stmt(stmt->getChildAt(4));
 
@@ -967,7 +967,7 @@ void ErrorHandler::check_Stmt(Node *stmt, bool inFuncBlock) {
         ICItem *cond = new ICItemVar(IS_GLOBAL);
         this->check_Cond(stmt->getChildAt(2), cond);
 
-        icTranslator->translate_Beq(cond, whileEndLabel);  // beq cond, whileEndLabel
+        icTranslator->translate_Beqz(cond, whileEndLabel);  // beqz cond, whileEndLabel
         checkErrorNode(stmt->getChildAt(3));  // ErrorType::MissingRPARENT
 
         inWhile++;

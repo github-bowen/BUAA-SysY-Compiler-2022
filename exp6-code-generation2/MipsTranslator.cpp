@@ -279,25 +279,6 @@ void MipsTranslator::translate() {
                 }
                 break;
             }
-            case ICEntryType::Not: {
-
-            }
-            case ICEntryType::Or:
-                break;
-            case ICEntryType::And:
-                break;
-            case ICEntryType::Equal:
-                break;
-            case ICEntryType::NotEqual:
-                break;
-            case ICEntryType::LessEqual:
-                break;
-            case ICEntryType::LessThan:
-                break;
-            case ICEntryType::GreaterThan:
-                break;
-            case ICEntryType::GreaterEqual:
-                break;
             case ICEntryType::Neg: {
                 auto *dst = (ICItemVar *) op1, *src = (ICItemVar *) op2;
                 if (src->isConst) {
@@ -310,12 +291,188 @@ void MipsTranslator::translate() {
                 }
                 break;
             }
+            case ICEntryType::Not: {
+                auto *dst = (ICItemVar *) op1, *src = (ICItemVar *) op2;
+                if (src->isConst) {
+                    li(Reg::$t0, src->value);
+                    sw(Reg::$t0, dst);
+                } else {
+                    lw(Reg::$t0, src);
+                    seq(Reg::$t0, Reg::$zero, Reg::$t0);
+                    sw(Reg::$t0, dst);
+                }
+                break;
+            }
+            case ICEntryType::Or: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value || r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    _or(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    _or(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
+                break;
+            }
+            case ICEntryType::And: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value && r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    _and(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    _and(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
+                break;
+            }
+            case ICEntryType::Equal: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value == r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    seq(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    seq(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
+                break;
+            }
+            case ICEntryType::NotEqual: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value != r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    sne(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    sne(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
+                break;
+            }
+            case ICEntryType::LessEqual: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value <= r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    sle(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    sle(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
+                break;
+            }
+            case ICEntryType::LessThan: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value < r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    slt(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    slt(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
+                break;
+            }
+            case ICEntryType::GreaterThan: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value > r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    sgt(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    sgt(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
+                break;
+            }
+            case ICEntryType::GreaterEqual: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value >= r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    sge(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    sge(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
+                break;
+            }
+            case ICEntryType::Beqz: {
+                auto *condition = (ICItemVar *) op1;
+                auto *label = (ICItemLabel *) op2;
+                if (condition->isConst) {
+                    if (condition->value == 0) {
+                        j(label);
+                    }
+                } else {
+                    lw(Reg::$t0, condition);
+                    beqz(Reg::$t0, label);
+                }
+                break;
+            }
+            case ICEntryType::InsertLabel:
+                insertLabel((ICItemLabel *) op1);
+                break;
 //            case ICEntryType::FuncDefine:
 //            case ICEntryType::MainFuncStart:
-            case ICEntryType::Beq:
-                break;
-            case ICEntryType::InsertLabel:
-                break;
         }
         i++;
     }
@@ -333,6 +490,7 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
     funcFParamId2offset.clear();
     std::vector<ICItem *> *params = func->params;
     const int num = params->size();
+    const int oldTempStackAddressTop = tempStackAddressTop;
 
     int offset = 0;
     for (const ICItem *param: *params) {
@@ -376,10 +534,36 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
                 sw(Reg::$t0, constVar);
                 break;
             }
-            case ICEntryType::ArrayDefine:
+            case ICEntryType::ArrayDefine: {  // 局部数组
+                const bool hasInitValue = op2 != nullptr;
+                auto *array = (ICItemArray *) op1;
+                const int firstAddress = tempStackAddressTop;
+                localArrayId2mem.insert({array->arrayId, tempStackAddressTop});
+                tempStackAddressTop += 4 * array->length;
+                if (hasInitValue) {
+                    li(Reg::$t1, firstAddress);  // 数组基地址
+                    for (int j = 0; j < array->length; ++j) {
+                        ICItemVar *rightValue = ((ICItemArray *) op2)->itemsToInitArray->at(j);
+                        lw(Reg::$t0, rightValue);
+                        sw(Reg::$t0, j * 4, Reg::$t1);
+                    }
+                }
                 break;
-            case ICEntryType::ConstArrayDefine:
+            }
+            case ICEntryType::ConstArrayDefine: {
+                auto *array = (ICItemArray *) op1;
+                const int firstAddress = tempStackAddressTop;
+                localArrayId2mem.insert({array->arrayId, tempStackAddressTop});
+                tempStackAddressTop += 4 * array->length;
+
+                li(Reg::$t1, firstAddress);  // 数组基地址
+                for (int j = 0; j < array->length; ++j) {
+                    const int rightValue = array->value[j];
+                    li(Reg::$t0, rightValue);
+                    sw(Reg::$t0, j * 4, Reg::$t1);
+                }
                 break;
+            }
                 // case ICEntryType::FuncDefine:  // 非法，不应该出现这个
             case ICEntryType::FuncCall: {
                 auto *calledFunc = (const ICItemFunc *) (entry->calledFunc);
@@ -539,8 +723,18 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
                 }
                 break;
             }
-            case ICEntryType::Not:
+            case ICEntryType::Not: {
+                auto *dst = (ICItemVar *) op1, *src = (ICItemVar *) op2;
+                if (src->isConst) {
+                    li(Reg::$t0, src->value);
+                    sw(Reg::$t0, dst);
+                } else {
+                    lw(Reg::$t0, src);
+                    seq(Reg::$t0, Reg::$zero, Reg::$t0);
+                    sw(Reg::$t0, dst);
+                }
                 break;
+            }
             case ICEntryType::Neg: {
                 auto *dst = (ICItemVar *) op1, *src = (ICItemVar *) op2;
                 if (src->isConst) {
@@ -553,35 +747,184 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
                 }
                 break;
             }
-            case ICEntryType::FuncDefine:
+//            case ICEntryType::FuncDefine:
+//                break;
+//            case ICEntryType::MainFuncStart:
+//                break;
+//            case ICEntryType::MainFuncEnd:
+//                break;
+            case ICEntryType::Or: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value || r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    _or(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    _or(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
                 break;
-            case ICEntryType::MainFuncStart:
+            }
+            case ICEntryType::And: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value && r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    _and(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    _and(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
                 break;
-            case ICEntryType::MainFuncEnd:
+            }
+            case ICEntryType::Equal: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value == r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    seq(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    seq(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
                 break;
-            case ICEntryType::Or:
+            }
+            case ICEntryType::NotEqual: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value != r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    sne(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    sne(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
                 break;
-            case ICEntryType::And:
+            }
+            case ICEntryType::LessEqual: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value <= r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    sle(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    sle(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
                 break;
-            case ICEntryType::Equal:
+            }
+            case ICEntryType::LessThan: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value < r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    slt(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    slt(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
                 break;
-            case ICEntryType::NotEqual:
+            }
+            case ICEntryType::GreaterThan: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value > r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    sgt(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    sgt(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
                 break;
-            case ICEntryType::LessEqual:
+            }
+            case ICEntryType::GreaterEqual: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value >= r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    sge(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    sge(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
                 break;
-            case ICEntryType::LessThan:
+            }
+            case ICEntryType::Beqz: {
+                auto *condition = (ICItemVar *) op1;
+                auto *label = (ICItemLabel *) op2;
+                if (condition->isConst) {
+                    if (condition->value == 0) {
+                        j(label);
+                    }
+                } else {
+                    lw(Reg::$t0, condition);
+                    beqz(Reg::$t0, label);
+                }
                 break;
-            case ICEntryType::GreaterThan:
-                break;
-            case ICEntryType::GreaterEqual:
-                break;
-            case ICEntryType::Beq:
-                break;
+            }
             case ICEntryType::InsertLabel:
+                insertLabel((ICItemLabel *) op1);
                 break;
         }
         i++;
     }
+    tempStackAddressTop = oldTempStackAddressTop;
     if (!findReturn) jr();
     funcFParamId2offset.clear();
 }
@@ -1023,6 +1366,14 @@ void MipsTranslator::jal(const ICItemFunc *calledFunc) {
     mipsOutput << "jal " << calledFunc->funcLabel->toString() << "\n";
 }
 
+void MipsTranslator::j(ICItemLabel *label) {
+    mipsOutput << "j " << label->toString() << "\n";
+}
+
+void MipsTranslator::beqz(Reg cond, ICItemLabel *label) {
+    mipsOutput << "beqz " << reg2s.find(cond)->second << ", " << label->toString() << "\n";
+}
+
 void MipsTranslator::exit() {
     mipsOutput << "\nli $v0, 10\n";
     syscall();
@@ -1110,3 +1461,48 @@ void MipsTranslator::sne(Reg rd, Reg rs, Reg rt) {
                ", " << reg2s.find(rt)->second << "\n";
 }
 
+void MipsTranslator::seq(Reg rd, Reg rs, Reg rt) {
+    mipsOutput << "seq " + reg2s.find(rd)->second <<
+               ", " << reg2s.find(rs)->second <<
+               ", " << reg2s.find(rt)->second << "\n";
+}
+
+void MipsTranslator::sle(Reg rd, Reg rs, Reg rt) {
+    mipsOutput << "seq " + reg2s.find(rd)->second <<
+               ", " << reg2s.find(rs)->second <<
+               ", " << reg2s.find(rt)->second << "\n";
+}
+
+void MipsTranslator::slt(Reg rd, Reg rs, Reg rt) {
+    mipsOutput << "seq " + reg2s.find(rd)->second <<
+               ", " << reg2s.find(rs)->second <<
+               ", " << reg2s.find(rt)->second << "\n";
+}
+
+void MipsTranslator::sge(Reg rd, Reg rs, Reg rt) {
+    mipsOutput << "seq " + reg2s.find(rd)->second <<
+               ", " << reg2s.find(rs)->second <<
+               ", " << reg2s.find(rt)->second << "\n";
+}
+
+void MipsTranslator::sgt(Reg rd, Reg rs, Reg rt) {
+    mipsOutput << "seq " + reg2s.find(rd)->second <<
+               ", " << reg2s.find(rs)->second <<
+               ", " << reg2s.find(rt)->second << "\n";
+}
+
+void MipsTranslator::_or(Reg rd, Reg rs, Reg rt) {
+    mipsOutput << "or " + reg2s.find(rd)->second <<
+               ", " << reg2s.find(rs)->second <<
+               ", " << reg2s.find(rt)->second << "\n";
+}
+
+void MipsTranslator::_and(Reg rd, Reg rs, Reg rt) {
+    mipsOutput << "and " + reg2s.find(rd)->second <<
+               ", " << reg2s.find(rs)->second <<
+               ", " << reg2s.find(rt)->second << "\n";
+}
+
+void MipsTranslator::insertLabel(ICItemLabel *label) {
+    mipsOutput << label->toString() << ":\n";
+}
