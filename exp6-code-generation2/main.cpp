@@ -13,7 +13,7 @@
 //#define STAGE_INTERMEDIATE_CODE
 #define STAGE_MIPS
 
-static const std::string pre = "./";  // TODO: 修改路径 ../
+static const std::string pre = "../";  // TODO: 修改路径 ../
 
 std::ifstream input(pre + "testfile.txt");
 std::ofstream normalOutput(pre + "output.txt");

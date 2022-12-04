@@ -349,12 +349,12 @@ void ErrorHandler::check_InitVal(Node *node, int d, ICItem *icItem) {
             default: {
                 auto *icItemArray = (ICItemArray *) icItem;
                 const int d1 = (node->getChildrenNum() - 1) / 2;
-                const int d2 = (node->getFirstChild()->getChildrenNum() - 1) / 2;
+                const int d2 = (node->getChildAt(1)->getChildrenNum() - 1) / 2;
                 icItemArray->value = new int[d1 * d2];
                 icItemArray->length = d1 * d2;
                 int k = 0;
                 for (int i = 1; i < node->getChildrenNum() - 1; i += 2) {
-                    for (int j = 1; j < node->getFirstChild()->getChildrenNum() - 1; j += 2) {
+                    for (int j = 1; j < node->getChildAt(1)->getChildrenNum() - 1; j += 2) {
                         Node *exp = node->getChildAt(i)->getChildAt(j)->getFirstChild();
                         this->check_Exp(exp, true, &temp, nullptr);
                         icItemArray->value[k++] = temp;
@@ -384,9 +384,8 @@ void ErrorHandler::check_InitVal(Node *node, int d, ICItem *icItem) {
             default: {
                 auto *icItemArray = (ICItemArray *) icItem;
                 std::vector<ICItemVar *> *arrayItems = icItemArray->itemsToInitArray;
-
                 for (int i = 1; i < node->getChildrenNum() - 1; i += 2) {
-                    for (int j = 1; j < node->getFirstChild()->getChildrenNum() - 1; j += 2) {
+                    for (int j = 1; j < node->getChildAt(1)->getChildrenNum() - 1; j += 2) {
                         Node *exp = node->getChildAt(i)->getChildAt(j)->getFirstChild();
                         auto *itemVar = new ICItemVar(false);  // isGlobal = false
                         this->check_Exp(exp, false, &temp, itemVar);

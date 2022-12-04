@@ -2,22 +2,21 @@
 temp:  .space  160000
 
 
+# arrr[1][1]
+global_arr1:  .word  2
+
+# a[0][0]
+global_const_arr2:  .word  -1895814400
+
 # string tokens: 
 
 
 .text 0x00400000
 
 # main function
-li $t0, -4
-sw $t0, 268500992($zero)
-lw $t0, 268500992($zero)
-li $t1, 2
-div $t0, $t1
-mflo $t2
-sw $t2, 268500996($zero)
-lw $a0, 268500996($zero)
-li $v0, 1
-syscall
+li $t1, 268500992
+li $t0, 1
+sw $t0, 0($t1)
 
 li $v0, 10
 syscall
