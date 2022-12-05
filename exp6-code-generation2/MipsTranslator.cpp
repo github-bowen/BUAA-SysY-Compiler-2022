@@ -3,6 +3,7 @@
 #include <fstream>
 #include "_debug.h"
 #include <string>
+#include <iostream>
 
 extern std::ofstream mipsOutput;
 static bool inSelfDefinedFunc = false;
@@ -567,11 +568,12 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
                 localArrayId2offset.insert({array->arrayId, tempFuncStackOffsetTop});
                 tempFuncStackOffsetTop += 4 * array->length;
                 if (hasInitValue) {
-                    li(Reg::$t1, firstAddress);  // 数组基地址
+//                    addiu(Reg::$t1, Reg::$sp, firstAddress);  // 数组基地址
+////                  li(Reg::$t1, firstAddress);
                     for (int j = 0; j < array->length; ++j) {
                         ICItemVar *rightValue = ((ICItemArray *) op2)->itemsToInitArray->at(j);
                         lw(Reg::$t0, rightValue);
-                        sw(Reg::$t0, j * 4, Reg::$t1);
+                        sw(Reg::$t0, j * 4 + firstAddress, Reg::$sp);
                     }
                 }
                 break;
@@ -583,11 +585,12 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
                 localArrayId2offset.insert({array->arrayId, tempFuncStackOffsetTop});
                 tempFuncStackOffsetTop += 4 * array->length;
 
-                li(Reg::$t1, firstAddress);  // 数组基地址
+//                addiu(Reg::$t1, Reg::$sp, firstAddress);  // 数组基地址
+////                li(Reg::$t1, firstAddress);
                 for (int j = 0; j < array->length; ++j) {
                     const int rightValue = array->value[j];
                     li(Reg::$t0, rightValue);
-                    sw(Reg::$t0, j * 4, Reg::$t1);
+                    sw(Reg::$t0, j * 4 + firstAddress, Reg::$sp);
                 }
                 break;
             }
@@ -633,7 +636,7 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
                         printStr(strId);
                     } else {
                         const ICItem *icItem = strItem->intItem;
-                        assert(icItem->type == ICItemType::Var);
+//                        assert(icItem->type == ICItemType::Var);
                         printInt((ICItemVar *) icItem);
                     }
                 }
@@ -1133,22 +1136,25 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var, bool whenPushingParamsRecursive
                         if (whenPushingParamsRecursively) {
                             addr += 1000;
                         }
+                        // TODO:!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         lw(reg, addr, Reg::$sp);
                         addu(reg, reg, Reg::$t9);
                         lw(reg, 0, reg);
                     } else {
                         if (inSelfDefinedFunc) {
                             if (array1Item->isTemp) {
-                                addr = tempVarId2offset.find(array1Item->tempArrayId)->second;
+                                addr = tempArrayId2offset.find(array1Item->tempArrayId)->second;
                             } else {
-                                addr = localVarId2offset.find(array1Item->arrayId)->second;
+                                addr = localArrayId2offset.find(array1Item->arrayId)->second;
                             }
                             if (whenPushingParamsRecursively) {
                                 addr += 1000;
                             }
-                            lw(reg, addr, Reg::$sp);
-                            addu(reg, reg, Reg::$t9);
-                            lw(reg, 0, reg);
+                            addiu(Reg::$t8, Reg::$sp, addr);
+                            addu(Reg::$t9, Reg::$t8, Reg::$t9);
+//                            lw(reg, addr, Reg::$sp);
+//                            addu(reg, reg, Reg::$t9);
+                            lw(reg, 0, Reg::$t9);
                         } else {
                             if (array1Item->isTemp) {
                                 addr = tempArrayId2mem.find(array1Item->tempArrayId)->second;
@@ -1191,16 +1197,18 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var, bool whenPushingParamsRecursive
                     } else {
                         if (inSelfDefinedFunc) {
                             if (array2Item->isTemp) {
-                                addr = tempVarId2offset.find(array2Item->tempArrayId)->second;
+                                addr = tempArrayId2offset.find(array2Item->tempArrayId)->second;
                             } else {
-                                addr = localVarId2offset.find(array2Item->arrayId)->second;
+                                addr = localArrayId2offset.find(array2Item->arrayId)->second;
                             }
                             if (whenPushingParamsRecursively) {
                                 addr += 1000;
                             }
-                            lw(reg, addr, Reg::$sp);
-                            addu(reg, reg, Reg::$t9);
-                            lw(reg, 0, reg);
+                            addiu(Reg::$t8, Reg::$sp, addr);
+                            addu(Reg::$t9, Reg::$t8, Reg::$t9);
+//                            lw(reg, addr, Reg::$sp);
+//                            addu(reg, reg, Reg::$t9);
+                            lw(reg, 0, Reg::$t9);
                         } else {
                             if (array2Item->isTemp) {
                                 addr = tempArrayId2mem.find(array2Item->tempArrayId)->second;
@@ -1228,14 +1236,14 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var, bool whenPushingParamsRecursive
                     } else {
                         if (inSelfDefinedFunc) {
                             if (arrayItem->isTemp) {
-                                addr = tempVarId2offset.find(arrayItem->tempArrayId)->second;
+                                addr = tempArrayId2offset.find(arrayItem->tempArrayId)->second;
                             } else {
-                                addr = localVarId2offset.find(arrayItem->arrayId)->second;
+                                addr = localArrayId2offset.find(arrayItem->arrayId)->second;
                             }
                             if (whenPushingParamsRecursively) {
                                 addr += 1000;
                             }
-                            lw(reg, addr, Reg::$sp);
+                            addiu(reg, Reg::$sp, addr);
                         } else {
                             if (arrayItem->isTemp) {
                                 addr = tempArrayId2mem.find(arrayItem->tempArrayId)->second;
@@ -1269,14 +1277,14 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var, bool whenPushingParamsRecursive
                     } else {
                         if (inSelfDefinedFunc) {
                             if (array2Item->isTemp) {
-                                addr = tempVarId2offset.find(array2Item->tempArrayId)->second;
+                                addr = tempArrayId2offset.find(array2Item->tempArrayId)->second;
                             } else {
-                                addr = localVarId2offset.find(array2Item->arrayId)->second;
+                                addr = localArrayId2offset.find(array2Item->arrayId)->second;
                             }
                             if (whenPushingParamsRecursively) {
                                 addr += 1000;
                             }
-                            lw(reg, addr, Reg::$sp);
+                            addiu(reg, Reg::$sp, addr);
                             addu(reg, reg, Reg::$t9);
                         } else {
                             if (array2Item->isTemp) {
@@ -1430,8 +1438,10 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
                         } else {
                             addr = localArrayId2offset.find(array1Item->arrayId)->second;
                         }
-                        lw(Reg::$t8, addr, Reg::$sp);  // t8: 数组实际的首地址
-                        addu(Reg::$t9, Reg::$t9, Reg::$t8);  // t9:偏移, t8: 首地址
+                        addiu(Reg::$t9, Reg::$t9, addr);
+                        addu(Reg::$t9, Reg::$t9, Reg::$sp);
+//                        lw(Reg::$t8, addr, Reg::$sp);  // t8 = 数组首地址
+//                        addu(Reg::$t9, Reg::$t9, Reg::$t8);
                         sw(reg, 0, Reg::$t9);
                     } else {
                         if (array1Item->isTemp) {
@@ -1476,8 +1486,10 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
                         } else {
                             addr = localArrayId2offset.find(array2Item->arrayId)->second;
                         }
-                        lw(Reg::$t8, addr, Reg::$sp);  // t8 = 数组首地址
-                        addu(Reg::$t9, Reg::$t9, Reg::$t8);
+                        addiu(Reg::$t9, Reg::$t9, addr);
+                        addu(Reg::$t9, Reg::$t9, Reg::$sp);
+//                        lw(Reg::$t8, addr, Reg::$sp);  // t8 = 数组首地址
+//                        addu(Reg::$t9, Reg::$t9, Reg::$t8);
                         sw(reg, 0, Reg::$t9);
                     } else {
                         if (array2Item->isTemp) {
@@ -1507,7 +1519,7 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
         sw(reg, 0, Reg::$t9);
         return;
     }
-    if (isFuncFParam(dst)) {  // TODO 形参为数组
+    if (isFuncFParam(dst)) {
         addr = funcFVarParamId2offset.find(dst->varId)->second;
         sw(reg, addr, Reg::$sp);
         return;
