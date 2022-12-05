@@ -988,7 +988,7 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
         }
         i++;
     }
-    if (!findReturn) jr();
+    jr();
     funcFArrayParamId2offset.clear();
     funcFVarParamId2offset.clear();
     clearLocalAndTempInFunc();
@@ -1150,12 +1150,12 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var, bool whenPushingParamsRecursive
                 }
                 case ReferenceType::Array1_Var: {
                     ICItem *offsetItem = var->array1_var_index;
-                    lw(Reg::$t9, (ICItemVar *) offsetItem, whenPushingParamsRecursively);  // $t9 = 数组下标
-                    sll(Reg::$t9, Reg::$t9, 2);  // t9 = t9 * 4
+                    lw(Reg::$t7, (ICItemVar *) offsetItem, whenPushingParamsRecursively);  // $t9 = 数组下标
+                    sll(Reg::$t7, Reg::$t7, 2);  // t7 = t7 * 4
                     auto array1Item = (ICItemArray *) referenceItem;
                     if (array1Item->isGlobal) {
                         la(reg, array1Item->toString());
-                        addu(reg, reg, Reg::$t9);  // reg = reg + t9 = 基地址 + 偏移
+                        addu(reg, reg, Reg::$t7);  // reg = reg + $t7 = 基地址 + 偏移
                         lw(reg, 0, reg);
                     } else if (isFuncFParam(array1Item)) {
                         addr = funcFArrayParamId2offset.find(array1Item->arrayId)->second;
@@ -1164,7 +1164,7 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var, bool whenPushingParamsRecursive
                         }
                         // TODO:!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         lw(reg, addr, Reg::$sp);
-                        addu(reg, reg, Reg::$t9);
+                        addu(reg, reg, Reg::$t7);
                         lw(reg, 0, reg);
                     } else {
                         if (inSelfDefinedFunc) {
@@ -1177,17 +1177,17 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var, bool whenPushingParamsRecursive
                                 addr += 1000;
                             }
                             addiu(Reg::$t8, Reg::$sp, addr);
-                            addu(Reg::$t9, Reg::$t8, Reg::$t9);
+                            addu(Reg::$t7, Reg::$t8, Reg::$t7);
 //                            lw(reg, addr, Reg::$sp);
-//                            addu(reg, reg, Reg::$t9);
-                            lw(reg, 0, Reg::$t9);
+//                            addu(reg, reg, Reg::$t7);
+                            lw(reg, 0, Reg::$t7);
                         } else {
                             if (array1Item->isTemp) {
                                 addr = tempArrayId2mem.find(array1Item->tempArrayId)->second;
                             } else {
                                 addr = localArrayId2mem.find(array1Item->arrayId)->second;
                             }
-                            addiu(reg, Reg::$t9, addr);
+                            addiu(reg, Reg::$t7, addr);
                             lw(reg, 0, reg);
                         }
                     }

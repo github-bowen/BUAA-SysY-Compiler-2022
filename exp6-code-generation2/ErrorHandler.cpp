@@ -977,11 +977,12 @@ void ErrorHandler::check_Stmt(Node *stmt, bool inFuncBlock) {
         const bool has_else = stmt->getChildrenNum() > 5;
 
         ICItemLabel *endLabel;
-        auto *jumpLabel = new ICItemLabel();
+
 
         ICItem *cond = new ICItemVar(IS_GLOBAL);
         this->check_Cond(stmt->getChildAt(2), cond);
 
+        auto *jumpLabel = new ICItemLabel();
         icTranslator->translate_Beqz(cond, jumpLabel);  // beqz cond, jumpLabel
         checkErrorNode(stmt->getChildAt(3));  // ErrorType::MissingRPARENT
         this->check_Stmt(stmt->getChildAt(4));
@@ -1124,13 +1125,23 @@ void ErrorHandler::check_LOrExp(Node *node, ICItem *icItem) {
         return;
     }
 
-//    auto *var1 = new ICItemVar(IS_GLOBAL);
-//    auto *var2 = new ICItemVar(IS_GLOBAL);
-    auto *jumpLabel = new ICItemLabel();
-    this->check_LOrExp(node->getFirstChild(), icItem);
-    icTranslator->translate_Bnez(icItem, jumpLabel);
-    this->check_LAndExp(node->getLastChild(), icItem);
-    icTranslator->translate_InsertLabel(jumpLabel);
+    auto *var1 = new ICItemVar(IS_GLOBAL);
+    auto *var2 = new ICItemVar(IS_GLOBAL);
+    auto *var1EndLabel = new ICItemLabel();
+    auto *endLabel = new ICItemLabel();
+
+    this->check_LOrExp(node->getFirstChild(), var1);
+    icTranslator->translate_Bnez(var1, var1EndLabel);
+
+    this->check_LAndExp(node->getLastChild(), var2);
+    icTranslator->translate_BinaryOperator(ICEntryType::Assign, icItem, var2);
+    icTranslator->translate_JumpLabel(endLabel);
+
+    icTranslator->translate_InsertLabel(var1EndLabel);
+    icTranslator->translate_BinaryOperator(ICEntryType::Assign, icItem, var1);
+
+
+    icTranslator->translate_InsertLabel(endLabel);
 
 //    ICItemVar *ret = ((ICItemVar *) icItem);
 //    ICEntryType op = icTranslator->symbol2binaryOp(node->getChildAt(1)->getToken()->symbol);
@@ -1144,13 +1155,22 @@ void ErrorHandler::check_LAndExp(Node *node, ICItem *icItem) {
         return;
     }
 
-//    auto *var1 = new ICItemVar(IS_GLOBAL);
-//    auto *var2 = new ICItemVar(IS_GLOBAL);
-    auto *jumpLabel = new ICItemLabel();
-    this->check_LAndExp(node->getFirstChild(), icItem);
-    icTranslator->translate_Beqz(icItem, jumpLabel);
-    this->check_EqExp(node->getLastChild(), icItem);
-    icTranslator->translate_InsertLabel(jumpLabel);
+    auto *var1 = new ICItemVar(IS_GLOBAL);
+    auto *var2 = new ICItemVar(IS_GLOBAL);
+    auto *var1EndLabel = new ICItemLabel();
+    auto *endLabel = new ICItemLabel();
+
+    this->check_LAndExp(node->getFirstChild(), var1);
+    icTranslator->translate_Beqz(var1, var1EndLabel);
+
+    this->check_EqExp(node->getLastChild(), var2);
+    icTranslator->translate_BinaryOperator(ICEntryType::Assign, icItem, var2);
+    icTranslator->translate_JumpLabel(endLabel);
+
+    icTranslator->translate_InsertLabel(var1EndLabel);
+    icTranslator->translate_BinaryOperator(ICEntryType::Assign, icItem, var1);
+
+    icTranslator->translate_InsertLabel(endLabel);
 
 //    ICItemVar *ret = ((ICItemVar *) icItem);
 //    ICEntryType op = icTranslator->symbol2binaryOp(node->getChildAt(1)->getToken()->symbol);
