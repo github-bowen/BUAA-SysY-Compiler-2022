@@ -107,6 +107,8 @@ public:
 
     void translate_Beqz(ICItem *condition, ICItemLabel *label) const;
 
+    void translate_Bnez(ICItem *condition, ICItemLabel *label) const;
+
     void translate_JumpLabel(ICItemLabel *label) const;
 
     void translate_InsertLabel(ICItemLabel *label) const;

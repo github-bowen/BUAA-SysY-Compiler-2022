@@ -80,6 +80,8 @@ public:
 
     void beqz(Reg cond, ICItemLabel *label);
 
+    void bnez(Reg cond, ICItemLabel *label);
+
     void exit();
 
     void getint(ICItemVar *dst);

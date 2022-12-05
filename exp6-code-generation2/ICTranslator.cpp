@@ -280,6 +280,14 @@ void ICTranslator::translate_Beqz(ICItem *condition, ICItemLabel *label) const {
     }
 }
 
+void ICTranslator::translate_Bnez(ICItem *condition, ICItemLabel *label) const {
+    if (currentFunc == nullptr) {
+        mainEntries->push_back(new ICEntry(ICEntryType::Bnez, condition, label));
+    } else {
+        currentFunc->entries->push_back(new ICEntry(ICEntryType::Bnez, condition, label));
+    }
+}
+
 void ICTranslator::translate_JumpLabel(ICItemLabel *label) const {
     if (currentFunc == nullptr) {
         mainEntries->push_back(new ICEntry(ICEntryType::JumpLabel, label));

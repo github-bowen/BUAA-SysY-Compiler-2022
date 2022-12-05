@@ -38,6 +38,7 @@ enum class ICEntryType {
     GreaterEqual,
 
     Beqz,
+    Bnez,
     InsertLabel,
     JumpLabel
 

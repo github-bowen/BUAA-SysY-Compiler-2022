@@ -478,6 +478,19 @@ void MipsTranslator::translate() {
                 }
                 break;
             }
+            case ICEntryType::Bnez: {
+                auto *condition = (ICItemVar *) op1;
+                auto *label = (ICItemLabel *) op2;
+                if (condition->isConst) {
+                    if (condition->value != 0) {
+                        j(label);
+                    }
+                } else {
+                    lw(Reg::$t0, condition);
+                    bnez(Reg::$t0, label);
+                }
+                break;
+            }
             case ICEntryType::JumpLabel: {
                 auto *label = (ICItemLabel *) op1;
                 j(label);
@@ -948,6 +961,19 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
                 } else {
                     lw(Reg::$t0, condition);
                     beqz(Reg::$t0, label);
+                }
+                break;
+            }
+            case ICEntryType::Bnez: {
+                auto *condition = (ICItemVar *) op1;
+                auto *label = (ICItemLabel *) op2;
+                if (condition->isConst) {
+                    if (condition->value != 0) {
+                        j(label);
+                    }
+                } else {
+                    lw(Reg::$t0, condition);
+                    bnez(Reg::$t0, label);
                 }
                 break;
             }
@@ -1622,6 +1648,10 @@ void MipsTranslator::beqz(Reg cond, ICItemLabel *label) {
     mipsOutput << "beqz " << reg2s.find(cond)->second << ", " << label->toString() << "\n";
 }
 
+void MipsTranslator::bnez(Reg cond, ICItemLabel *label) {
+    mipsOutput << "bnez " << reg2s.find(cond)->second << ", " << label->toString() << "\n";
+}
+
 void MipsTranslator::exit() {
     mipsOutput << "\nli $v0, 10\n";
     syscall();
@@ -1740,12 +1770,16 @@ void MipsTranslator::sgt(Reg rd, Reg rs, Reg rt) {
 }
 
 void MipsTranslator::_or(Reg rd, Reg rs, Reg rt) {
+    // 按位或，可以用来代替或
     mipsOutput << "or " + reg2s.find(rd)->second <<
                ", " << reg2s.find(rs)->second <<
                ", " << reg2s.find(rt)->second << "\n";
 }
 
 void MipsTranslator::_and(Reg rd, Reg rs, Reg rt) {
+    // 注意：此处 _and 为逻辑与，不是按位与！！！！！！！！！！！！！！！！
+    sne(rs, rs, Reg::$zero);
+    sne(rt, rt, Reg::$zero);
     mipsOutput << "and " + reg2s.find(rd)->second <<
                ", " << reg2s.find(rs)->second <<
                ", " << reg2s.find(rt)->second << "\n";

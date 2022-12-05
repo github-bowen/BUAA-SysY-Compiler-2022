@@ -1124,14 +1124,17 @@ void ErrorHandler::check_LOrExp(Node *node, ICItem *icItem) {
         return;
     }
 
-    auto *var1 = new ICItemVar(IS_GLOBAL);
-    auto *var2 = new ICItemVar(IS_GLOBAL);
-    this->check_LOrExp(node->getFirstChild(), var1);
-    this->check_LAndExp(node->getLastChild(), var2);
+//    auto *var1 = new ICItemVar(IS_GLOBAL);
+//    auto *var2 = new ICItemVar(IS_GLOBAL);
+    auto *jumpLabel = new ICItemLabel();
+    this->check_LOrExp(node->getFirstChild(), icItem);
+    icTranslator->translate_Bnez(icItem, jumpLabel);
+    this->check_LAndExp(node->getLastChild(), icItem);
+    icTranslator->translate_InsertLabel(jumpLabel);
 
-    ICItemVar *ret = ((ICItemVar *) icItem);
-    ICEntryType op = icTranslator->symbol2binaryOp(node->getChildAt(1)->getToken()->symbol);
-    icTranslator->translate_BinaryOperator(op, ret, var1, var2);
+//    ICItemVar *ret = ((ICItemVar *) icItem);
+//    ICEntryType op = icTranslator->symbol2binaryOp(node->getChildAt(1)->getToken()->symbol);
+//    icTranslator->translate_BinaryOperator(op, ret, var1, var2);
 }
 
 // LAndExp → EqExp | LAndExp '&&' EqExp
@@ -1141,14 +1144,17 @@ void ErrorHandler::check_LAndExp(Node *node, ICItem *icItem) {
         return;
     }
 
-    auto *var1 = new ICItemVar(IS_GLOBAL);
-    auto *var2 = new ICItemVar(IS_GLOBAL);
-    this->check_LAndExp(node->getFirstChild(), var1);
-    this->check_EqExp(node->getLastChild(), var2);
+//    auto *var1 = new ICItemVar(IS_GLOBAL);
+//    auto *var2 = new ICItemVar(IS_GLOBAL);
+    auto *jumpLabel = new ICItemLabel();
+    this->check_LAndExp(node->getFirstChild(), icItem);
+    icTranslator->translate_Beqz(icItem, jumpLabel);
+    this->check_EqExp(node->getLastChild(), icItem);
+    icTranslator->translate_InsertLabel(jumpLabel);
 
-    ICItemVar *ret = ((ICItemVar *) icItem);
-    ICEntryType op = icTranslator->symbol2binaryOp(node->getChildAt(1)->getToken()->symbol);
-    icTranslator->translate_BinaryOperator(op, ret, var1, var2);
+//    ICItemVar *ret = ((ICItemVar *) icItem);
+//    ICEntryType op = icTranslator->symbol2binaryOp(node->getChildAt(1)->getToken()->symbol);
+//    icTranslator->translate_BinaryOperator(op, ret, var1, var2);
 }
 
 // EqExp → RelExp | EqExp ('==' | '!=') RelExp
