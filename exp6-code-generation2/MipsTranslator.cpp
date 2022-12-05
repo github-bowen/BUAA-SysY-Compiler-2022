@@ -166,7 +166,7 @@ void MipsTranslator::translate() {
                         printStr(strId);
                     } else {
                         const ICItem *icItem = strItem->intItem;
-                        assert(icItem->type == ICItemType::Var);
+//                        assert(icItem->type == ICItemType::Var);
                         printInt((ICItemVar *) icItem);
                     }
                 }
@@ -1154,14 +1154,19 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var, bool whenPushingParamsRecursive
                 }
                 case ReferenceType::Array2_Var: {
                     ICItem *offsetItem1 = var->array2_var_index1;
+
+                    auto array2Item = (ICItemArray *) referenceItem;
+                    const int d2 = array2Item->originType.length2;
+
                     ICItem *offsetItem2 = var->array2_var_index2;
                     // $t8 = 数组下标 1
                     lw(Reg::$t8, (ICItemVar *) offsetItem1, whenPushingParamsRecursively);
                     // $t9 = 数组下标 2
                     lw(Reg::$t9, (ICItemVar *) offsetItem2, whenPushingParamsRecursively);
-                    mul(Reg::$t9, Reg::$t9, Reg::$t8);
+                    mul(Reg::$t8, Reg::$t8, d2);
+                    addu(Reg::$t9, Reg::$t8, Reg::$t9);
                     sll(Reg::$t9, Reg::$t9, 2);  // t9 = t9 * 4
-                    auto array2Item = (ICItemArray *) referenceItem;
+
                     if (array2Item->isGlobal) {
                         la(reg, array2Item->toString());
                         addu(reg, reg, Reg::$t9);  // reg = reg + t9 = 基地址 + 偏移
