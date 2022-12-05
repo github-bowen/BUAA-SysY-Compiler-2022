@@ -2,11 +2,8 @@
 temp:  .space  160000
 
 
-# arrr[1][1]
-global_arr1:  .word  2
-
-# a[0][0]
-global_const_arr2:  .word  -1895814400
+# arr[1][1]
+global_arr1:  .word  0
 
 # string tokens: 
 
@@ -14,9 +11,14 @@ global_const_arr2:  .word  -1895814400
 .text 0x00400000
 
 # main function
-li $t1, 268500992
 li $t0, 1
-sw $t0, 0($t1)
+li $t8, 0
+li $t9, 0
+mul $t9, $t9, $t8
+sll $t9, $t9, 2
+la $t8, global_arr1
+addu $t9, $t8, $t9
+sw $t0, 0($t9)
 
 li $v0, 10
 syscall

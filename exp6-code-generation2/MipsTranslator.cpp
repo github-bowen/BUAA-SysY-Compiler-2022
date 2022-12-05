@@ -1034,6 +1034,9 @@ void MipsTranslator::translate_GlobalVarOrArrayDef(ICEntry *defEntry) {
             mipsOutput << initValues[i] << ", ";
         }
         mipsOutput << initValues[length - 1] << "\n";
+#ifdef MIPS_DEBUG
+        mipsOutput << std::flush;
+#endif
     }
 }
 
@@ -1048,6 +1051,10 @@ bool MipsTranslator::isFuncFParam(ICItemArray *array) {
 void MipsTranslator::lw(Reg reg, ICItemVar *var, bool whenPushingParamsRecursively) {
     int addr;
     ICItem *referenceItem = var;
+#ifdef MIPS_DEBUG
+    mipsOutput << std::flush;
+#endif
+    assert(var != nullptr);
     if (referenceItem->lValReference != nullptr) {  // var 为 LVal
         ReferenceType referenceType = referenceItem->referenceType;
         referenceItem = referenceItem->lValReference;
@@ -1092,7 +1099,7 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var, bool whenPushingParamsRecursive
                     return;
                 }
                 case ReferenceType::Array1_Var: {
-                    ICItem *offsetItem = referenceItem->array1_var_index;
+                    ICItem *offsetItem = var->array1_var_index;
                     lw(Reg::$t9, (ICItemVar *) offsetItem);  // $t9 = 数组下标
                     sll(Reg::$t9, Reg::$t9, 2);  // t9 = t9 * 4
                     auto array1Item = (ICItemArray *) referenceItem;
@@ -1134,8 +1141,8 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var, bool whenPushingParamsRecursive
                     return;
                 }
                 case ReferenceType::Array2_Var: {
-                    ICItem *offsetItem1 = referenceItem->array2_var_index1;
-                    ICItem *offsetItem2 = referenceItem->array2_var_index2;
+                    ICItem *offsetItem1 = var->array2_var_index1;
+                    ICItem *offsetItem2 = var->array2_var_index2;
                     lw(Reg::$t8, (ICItemVar *) offsetItem1);  // $t8 = 数组下标 1
                     lw(Reg::$t9, (ICItemVar *) offsetItem2);  // $t9 = 数组下标 2
                     mul(Reg::$t9, Reg::$t9, Reg::$t8);
@@ -1213,7 +1220,7 @@ void MipsTranslator::lw(Reg reg, ICItemVar *var, bool whenPushingParamsRecursive
                     return;
                 }
                 case ReferenceType::Array2_Array1: {  // 传新数组的首地址
-                    ICItem *offsetItem = referenceItem->array2_array1_index;
+                    ICItem *offsetItem = var->array2_array1_index;
                     auto *array2Item = (ICItemArray *) referenceItem;
                     const int refArrayD2 = array2Item->originType.length2;  // 所引用数组的第二维长度
 //                    mipsOutput << "# 实参类型：Array2_Array1，传入开始\n";
@@ -1374,7 +1381,7 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
                 return;
             }
             case ReferenceType::Array1_Var: {  // 存到一维数组的某个元素里
-                ICItem *offsetItem = dstLVal->array1_var_index;
+                ICItem *offsetItem = dst->array1_var_index;
                 lw(Reg::$t9, (ICItemVar *) offsetItem);  // $t9 = 数组下标
                 sll(Reg::$t9, Reg::$t9, 2);  // t9 = t9 * 4 偏移量
                 auto array1Item = (ICItemArray *) dstLVal;
@@ -1409,8 +1416,8 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
                 return;
             }
             case ReferenceType::Array2_Var: {
-                ICItem *offsetItem1 = dstLVal->array2_var_index1;
-                ICItem *offsetItem2 = dstLVal->array2_var_index2;
+                ICItem *offsetItem1 = dst->array2_var_index1;
+                ICItem *offsetItem2 = dst->array2_var_index2;
                 lw(Reg::$t8, (ICItemVar *) offsetItem1);  // $t8 = 数组下标 1
                 lw(Reg::$t9, (ICItemVar *) offsetItem2);  // $t9 = 数组下标 2
                 mul(Reg::$t9, Reg::$t9, Reg::$t8);

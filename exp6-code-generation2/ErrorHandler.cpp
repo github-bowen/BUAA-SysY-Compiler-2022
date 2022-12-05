@@ -666,7 +666,7 @@ SymbolTableEntry *ErrorHandler::check_LVal(Node *node, bool fromConstExp,
     SymbolTableEntry *exp1Entry;
     SymbolTableEntry *exp2Entry;
 
-    if (size == 4) {
+    if (size >= 4) {
         exp1 = node->getChildAt(2);
         icItemVar1 = new ICItemVar(IS_GLOBAL);
         exp1Entry = this->check_Exp(exp1, fromConstExp, &v1, icItemVar1);
