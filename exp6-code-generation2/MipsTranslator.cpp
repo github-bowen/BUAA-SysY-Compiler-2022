@@ -84,6 +84,7 @@ void MipsTranslator::translate() {
         const int opNum = entry->opNum;
         switch (entry->entryType) {
             case ICEntryType::VarDefine: {  // 局部变量
+                mipsOutput << "# local var defition:\n";
                 const bool hasInitValue = op2 != nullptr;
                 auto *var = (ICItemVar *) op1;
                 localVarId2mem.insert({var->varId, tempStackAddressTop});
@@ -97,6 +98,7 @@ void MipsTranslator::translate() {
                 break;
             }
             case ICEntryType::ConstVarDefine: {  // 局部常量
+                mipsOutput << "# local const var defition:\n";
                 auto *constVar = (ICItemVar *) op1;
                 localVarId2mem.insert({constVar->varId, tempStackAddressTop});
                 tempStackAddressTop += 4;
@@ -106,6 +108,7 @@ void MipsTranslator::translate() {
                 break;
             }
             case ICEntryType::ArrayDefine: {  // 局部数组
+                mipsOutput << "# local array defition:\n";
                 const bool hasInitValue = op2 != nullptr;
                 auto *array = (ICItemArray *) op1;
                 const int firstAddress = tempStackAddressTop;
@@ -122,6 +125,7 @@ void MipsTranslator::translate() {
                 break;
             }
             case ICEntryType::ConstArrayDefine: {
+                mipsOutput << "# local const array defition:\n";
                 auto *array = (ICItemArray *) op1;
                 const int firstAddress = tempStackAddressTop;
                 localArrayId2mem.insert({array->arrayId, tempStackAddressTop});
@@ -531,6 +535,7 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
         ICItem *op1 = entry->operator1, *op2 = entry->operator2, *op3 = entry->operator3;
         switch (entry->entryType) {
             case ICEntryType::VarDefine: {  // 局部变量
+                mipsOutput << "# local var defition:\n";
                 const bool hasInitValue = op2 != nullptr;
                 auto *var = (ICItemVar *) op1;
                 localVarId2offset.insert({var->varId, tempFuncStackOffsetTop});
@@ -544,6 +549,7 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
                 break;
             }
             case ICEntryType::ConstVarDefine: {  // 局部常量
+                mipsOutput << "# local const var defition:\n";
                 auto *constVar = (ICItemVar *) op1;
                 localVarId2offset.insert({constVar->varId, tempFuncStackOffsetTop});
                 tempFuncStackOffsetTop += 4;
@@ -553,6 +559,7 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
                 break;
             }
             case ICEntryType::ArrayDefine: {  // 局部数组
+                mipsOutput << "# local array defition:\n";
                 const bool hasInitValue = op2 != nullptr;
                 auto *array = (ICItemArray *) op1;
                 const int firstAddress = tempFuncStackOffsetTop;
@@ -569,6 +576,7 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
                 break;
             }
             case ICEntryType::ConstArrayDefine: {
+                mipsOutput << "# local const array defition:\n";
                 auto *array = (ICItemArray *) op1;
                 const int firstAddress = tempFuncStackOffsetTop;
                 localArrayId2offset.insert({array->arrayId, tempFuncStackOffsetTop});
@@ -1437,12 +1445,19 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
             }
             case ReferenceType::Array2_Var: {
                 ICItem *offsetItem1 = dst->array2_var_index1;
-                ICItem *offsetItem2 = dst->array2_var_index2;
-                lw(Reg::$t8, (ICItemVar *) offsetItem1);  // $t8 = 数组下标 1
-                lw(Reg::$t9, (ICItemVar *) offsetItem2);  // $t9 = 数组下标 2
-                mul(Reg::$t9, Reg::$t9, Reg::$t8);
-                sll(Reg::$t9, Reg::$t9, 2);  // t9 = t9 * 4  总的偏移量
+
                 auto array2Item = (ICItemArray *) dstLVal;
+                const int d2 = array2Item->originType.length2;
+
+                ICItem *offsetItem2 = dst->array2_var_index2;
+                // $t8 = 数组下标 1
+                lw(Reg::$t8, (ICItemVar *) offsetItem1);
+                // $t9 = 数组下标 2
+                lw(Reg::$t9, (ICItemVar *) offsetItem2);
+                mul(Reg::$t8, Reg::$t8, d2);
+                addu(Reg::$t9, Reg::$t8, Reg::$t9);
+                sll(Reg::$t9, Reg::$t9, 2);  // t9 = t9 * 4  总的偏移量
+
                 if (array2Item->isGlobal) {
                     la(Reg::$t8, array2Item->toString());  // t8 基地址
                     addu(Reg::$t9, Reg::$t8, Reg::$t9);  // t9 = t8 + t9 = 基地址 + 偏移
@@ -1468,7 +1483,7 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
                             addr = localArrayId2mem.find(array2Item->arrayId)->second;
                         }
                         addiu(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
-                        sw(reg, addr, Reg::$zero);
+                        sw(reg, 0, Reg::$t9);
                     }
                 }
                 return;

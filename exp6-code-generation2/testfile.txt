@@ -1,10 +1,16 @@
-const int a[2][2]={{1,2},{4,3}};
-
-int main(){
 
 
-	printf("%d\n",a[0][1]);
+int main() {
+    int c[2][2] = {{1, 2}, {3, 4}};
 
+    c[1][1] = 0;
 
-	return 0;
+    printf("%d", c[0][0]);
+
+    
+    return 0;
 }
+
+
+
+
