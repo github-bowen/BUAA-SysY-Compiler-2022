@@ -638,6 +638,8 @@ SymbolTableEntry *ErrorHandler::check_Exp(Node *node, bool fromConstExp,
  */
 SymbolTableEntry *ErrorHandler::check_LVal(Node *node, bool fromConstExp,
                                            int *constExpValue, ICItem *icItem) {
+    if (icItem == nullptr) return nullptr;  // 代表出现类似句子: arr[0]; 只有LVal
+
     Node *ident = node->getFirstChild();
     if (!this->currentTable->nameExistedInAllTables(ident)) {
         errorLog.insert({ident->getToken()->lineNumber,

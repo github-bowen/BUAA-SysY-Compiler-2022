@@ -2,23 +2,108 @@
 temp:  .space  160000
 
 
-# arr[1][1]
-global_arr1:  .word  0
+# A[0]
+global_const_arr1:  .word  -2013254656
+
+# B[0][0]
+global_const_arr2:  .word  -1895820288
+
+# a[2]
+global_arr3:  .word  0, 0
+
+# b[2][3]
+global_arr4:  .word  0, 0, 0, 0, 0, 0
+
+# c[3]
+global_arr5:  .word  0, 1, 2
+
+# d[2][2]
+global_arr6:  .word  9, 8, 7, 6
 
 # string tokens: 
+str_2:  .asciiz   " "
+str_4:  .asciiz   "\n"
+str_5:  .asciiz   "20373236\n"
+str_6:  .asciiz   "\n"
 
 
 .text 0x00400000
 
 # main function
-li $t0, 1
+la $a0, str_5
+li $v0, 4
+syscall
+li $t0, 100
+li $t9, 0
+sll $t9, $t9, 2
+la $t8, global_arr3
+addu $t9, $t8, $t9
+sw $t0, 0($t9)
+li $t0, 0
+li $t9, 1
+sll $t9, $t9, 2
+la $t8, global_arr3
+addu $t9, $t8, $t9
+sw $t0, 0($t9)
+li $t0, 0
 li $t8, 0
 li $t9, 0
 mul $t9, $t9, $t8
 sll $t9, $t9, 2
-la $t8, global_arr1
+la $t8, global_arr4
 addu $t9, $t8, $t9
 sw $t0, 0($t9)
+
+
+# Pushing Function Real Params:
+addiu $sp, $sp, -1000
+sw $ra, 0($sp)
+la $t0, global_arr3
+sw $t0, 4($sp)
+li $t0, 2
+sw $t0, 8($sp)
+# Finished Pushing Params!
+# Call function!
+jal Label_1
+lw $ra, 0($sp)
+# Pop params
+addiu $sp, $sp, 1000
+
+
+
+# Pushing Function Real Params:
+addiu $sp, $sp, -1000
+sw $ra, 0($sp)
+la $t0, global_arr5
+sw $t0, 4($sp)
+li $t0, 3
+sw $t0, 8($sp)
+# Finished Pushing Params!
+# Call function!
+jal Label_1
+lw $ra, 0($sp)
+# Pop params
+addiu $sp, $sp, 1000
+
+la $a0, str_6
+li $v0, 4
+syscall
+
+
+# Pushing Function Real Params:
+addiu $sp, $sp, -1000
+sw $ra, 0($sp)
+la $t0, global_arr6
+sw $t0, 4($sp)
+li $t0, 2
+sw $t0, 8($sp)
+# Finished Pushing Params!
+# Call function!
+jal Label_4
+lw $ra, 0($sp)
+# Pop params
+addiu $sp, $sp, 1000
+
 
 li $v0, 10
 syscall
@@ -27,4 +112,112 @@ syscall
 
 
 # self defined functions
+
+# ---------------- FUCNTION: print_array ------------------
+Label_1:
+
+li $t0, 1
+sw $t0, 12($sp)
+li $t9, 0
+sll $t9, $t9, 2
+lw $a0, 4($sp)
+addu $a0, $a0, $t9
+lw $a0, 0($a0)
+li $v0, 1
+syscall
+Label_2:
+lw $t0, 12($sp)
+lw $t1, 8($sp)
+slt $t2, $t0, $t1
+sw $t2, 16($sp)
+lw $t0, 16($sp)
+beqz $t0, Label_3
+la $a0, str_2
+li $v0, 4
+syscall
+lw $t9, 12($sp)
+sll $t9, $t9, 2
+lw $a0, 4($sp)
+addu $a0, $a0, $t9
+lw $a0, 0($a0)
+li $v0, 1
+syscall
+lw $t0, 12($sp)
+li $t1, 1
+addu $t2, $t0, $t1
+sw $t2, 20($sp)
+lw $t0, 20($sp)
+sw $t0, 12($sp)
+j Label_2
+Label_3:
+la $a0, str_4
+li $v0, 4
+syscall
+jr $ra
+
+
+
+# ---------------- FUCNTION: print_array_2 ------------------
+Label_4:
+
+li $t0, 1
+sw $t0, 12($sp)
+
+
+# Pushing Function Real Params:
+addiu $sp, $sp, -1000
+sw $ra, 0($sp)
+li $t9, 0
+mul $t9, $t9, 2
+sll $t9, $t9, 2
+lw $t0, 1004($sp)
+addu $t0, $t9, $t0
+sw $t0, 4($sp)
+lw $t0, 1008($sp)
+sw $t0, 8($sp)
+# Finished Pushing Params!
+# Call function!
+jal Label_1
+lw $ra, 0($sp)
+# Pop params
+addiu $sp, $sp, 1000
+
+Label_5:
+lw $t0, 12($sp)
+lw $t1, 8($sp)
+slt $t2, $t0, $t1
+sw $t2, 16($sp)
+lw $t0, 16($sp)
+beqz $t0, Label_6
+
+
+# Pushing Function Real Params:
+addiu $sp, $sp, -1000
+sw $ra, 0($sp)
+lw $t9, 1012($sp)
+mul $t9, $t9, 2
+sll $t9, $t9, 2
+lw $t0, 1004($sp)
+addu $t0, $t9, $t0
+sw $t0, 4($sp)
+lw $t0, 1008($sp)
+sw $t0, 8($sp)
+# Finished Pushing Params!
+# Call function!
+jal Label_1
+lw $ra, 0($sp)
+# Pop params
+addiu $sp, $sp, 1000
+
+lw $t0, 12($sp)
+li $t1, 1
+addu $t2, $t0, $t1
+sw $t2, 20($sp)
+lw $t0, 20($sp)
+sw $t0, 12($sp)
+j Label_5
+Label_6:
+jr $ra
+
+
 

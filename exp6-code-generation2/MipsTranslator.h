@@ -39,7 +39,9 @@ public:
 
     std::map<Reg, int> reg2id;
 
-    std::map<int, int> funcFParamId2offset;
+    std::map<int, int> funcFVarParamId2offset;
+
+    std::map<int, int> funcFArrayParamId2offset;
 
     ICTranslator *icTranslator;
 
