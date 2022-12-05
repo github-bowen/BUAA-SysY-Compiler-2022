@@ -296,6 +296,7 @@ void MipsTranslator::translate() {
             case ICEntryType::Not: {
                 auto *dst = (ICItemVar *) op1, *src = (ICItemVar *) op2;
                 if (src->isConst) {
+                    assert(op2->type == ICItemType::Var);
                     li(Reg::$t0, !src->value);
                     sw(Reg::$t0, dst);
                 } else {
@@ -742,7 +743,8 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
             case ICEntryType::Not: {
                 auto *dst = (ICItemVar *) op1, *src = (ICItemVar *) op2;
                 if (src->isConst) {
-                    li(Reg::$t0, src->value);
+                    assert(op2->type == ICItemType::Var);
+                    li(Reg::$t0, !src->value);
                     sw(Reg::$t0, dst);
                 } else {
                     lw(Reg::$t0, src);

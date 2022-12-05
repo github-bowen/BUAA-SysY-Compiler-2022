@@ -255,7 +255,7 @@ void ErrorHandler::check_ConstDef(Node *node) {
         // SymbolTableEntry(Node *node, SymbolTableEntryType type, unsigned int defLineNum);
         switch (constValue->dimension) {
             case 0: {
-                auto *varConst = new VarConst(constValue->value.var);
+                auto *varConst = new VarConst(constValue->value->var);
                 auto *varConstEntry = new SymbolTableEntry(
                         ident, varConst, ident->getToken()->lineNumber, false);
                 currentTable->addEntry(*varConstEntry->getName(), varConstEntry);
@@ -264,7 +264,7 @@ void ErrorHandler::check_ConstDef(Node *node) {
             }
             case 1: {
                 int d1 = constValue->d1;
-                auto *array1Const = new Array1Const(d1, constValue->value.array1);
+                auto *array1Const = new Array1Const(d1, constValue->value->array1);
                 auto *array1ConstEntry = new SymbolTableEntry(
                         ident, array1Const, ident->getToken()->lineNumber, false);
                 currentTable->addEntry(*array1ConstEntry->getName(), array1ConstEntry);
@@ -275,7 +275,7 @@ void ErrorHandler::check_ConstDef(Node *node) {
             default:
                 int d1 = constValue->d1;
                 int d2 = constValue->d2;
-                auto *array2Const = new Array2Const(d1, d2, constValue->value.array2);
+                auto *array2Const = new Array2Const(d1, d2, constValue->value->array2);
                 auto *array2ConstEntry = new SymbolTableEntry(
                         ident, array2Const, ident->getToken()->lineNumber, false);
                 currentTable->addEntry(*array2ConstEntry->getName(), array2ConstEntry);
@@ -404,7 +404,11 @@ ConstValue *ErrorHandler::check_ConstInitVal(Node *node, int d) {
     constValue->dimension = d;
     switch (d) {
         case 0: {
-            constValue->value.var = this->check_ConstExp(node->getFirstChild());
+            constValue->value->var = this->check_ConstExp(node->getFirstChild());
+            constValue->value->array1 = nullptr;
+            constValue->value->array2 = nullptr;
+            constValue->d1 = -1;
+            constValue->d2 = -1;
             return constValue;
         }
         case 1: {  // ConstInitVal → '{' ConstInitVal { ',' ConstInitVal }  '}'
@@ -414,22 +418,45 @@ ConstValue *ErrorHandler::check_ConstInitVal(Node *node, int d) {
                 Node *constExp = node->getChildAt(i)->getFirstChild();
                 initArray[j++] = (this->check_ConstExp(constExp));
             }
-            constValue->value.array1 = initArray;
+#ifdef ERROR_HANDLER_DEBUG
+            std::cout << "init array1: ";
+            for (int i = 0; i < d1; ++i) {
+                std::cout << initArray[i] << " ";
+            }
+            std::cout << std::endl;
+#endif
+            constValue->value->array1 = initArray;
+            constValue->value->array2 = nullptr;
+            constValue->value->var = 999999999;
+            constValue->d1 = d1;
+            constValue->d2 = -1;
+#ifdef ERROR_HANDLER_DEBUG
+            for (int i = 0; i < constValue->d1; ++i) {
+                std::cout << constValue->value->array1[i] << " ";
+            }
+            std::cout << std::endl;
+#endif
             return constValue;
         }
         default: // ConstInitVal → '{' ConstInitVal { ',' ConstInitVal }  '}'
             const int d1 = (node->getChildrenNum() - 1) / 2;
+            int d2;
             int **initArray2 = new int *[d1];
             for (int i = 1, j = 0; i < node->getChildrenNum() - 1; i += 2, ++j) {
                 ConstValue *retArray1 = this->check_ConstInitVal(node->getChildAt(i), 1);
                 initArray2[j] = new int[retArray1->d1];
+                d2 = retArray1->d1;
 //                initArray2[j] = retArray1->value.array1;
-
                 for (int k = 0; k < retArray1->d1; ++k) {
-                    initArray2[j][k] = retArray1->value.array1[k];
+                    assert(retArray1->value->array1 != nullptr);
+                    initArray2[j][k] = retArray1->value->array1[k];
                 }
             }
-            constValue->value.array2 = initArray2;
+            constValue->value->array2 = initArray2;
+            constValue->value->array1 = nullptr;
+            constValue->value->var = 999999999;
+            constValue->d1 = d1;
+            constValue->d2 = d2;
             return constValue;
     }
 }
