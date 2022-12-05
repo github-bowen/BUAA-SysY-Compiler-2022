@@ -90,7 +90,9 @@ void MipsTranslator::translate() {
                 localVarId2mem.insert({var->varId, tempStackAddressTop});
                 tempStackAddressTop += 4;
                 if (hasInitValue) {
-                    assert(op2->type == ICItemType::Var);
+#ifdef MIPS_DEBUG
+                    mipsOutput << std::flush;
+#endif
                     auto *rightValue = (ICItemVar *) op2;
                     lw(Reg::$t0, rightValue);
                     sw(Reg::$t0, var);
@@ -541,7 +543,6 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
                 localVarId2offset.insert({var->varId, tempFuncStackOffsetTop});
                 tempFuncStackOffsetTop += 4;
                 if (hasInitValue) {
-                    assert(op2->type == ICItemType::Var);
                     auto *rightValue = (ICItemVar *) op2;
                     lw(Reg::$t0, rightValue);
                     sw(Reg::$t0, var);
@@ -1419,8 +1420,9 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
                     sw(reg, 0, Reg::$t9);
                 } else if (isFuncFParam(array1Item)) {
                     addr = funcFArrayParamId2offset.find(array1Item->arrayId)->second;
-                    addiu(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
-                    sw(reg, addr, Reg::$sp);
+                    lw(Reg::$t8, addr, Reg::$sp);  // t8: 数组实际的首地址
+                    addu(Reg::$t9, Reg::$t9, Reg::$t8);  // t9:偏移, t8: 首地址
+                    sw(reg, 0, Reg::$t9);
                 } else {
                     if (inSelfDefinedFunc) {
                         if (array1Item->isTemp) {
@@ -1428,8 +1430,8 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
                         } else {
                             addr = localArrayId2offset.find(array1Item->arrayId)->second;
                         }
-                        lw(Reg::$t8, addr, Reg::$sp);  // t8 = 数组首地址
-                        addu(Reg::$t9, Reg::$t9, Reg::$t8);
+                        lw(Reg::$t8, addr, Reg::$sp);  // t8: 数组实际的首地址
+                        addu(Reg::$t9, Reg::$t9, Reg::$t8);  // t9:偏移, t8: 首地址
                         sw(reg, 0, Reg::$t9);
                     } else {
                         if (array1Item->isTemp) {
@@ -1438,7 +1440,7 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
                             addr = localArrayId2mem.find(array1Item->arrayId)->second;
                         }
                         addiu(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
-                        sw(reg, addr, Reg::$zero);
+                        sw(reg, 0, Reg::$t9);
                     }
                 }
                 return;
@@ -1464,8 +1466,9 @@ void MipsTranslator::sw(Reg reg, ICItemVar *dst) {
                     sw(reg, 0, Reg::$t9);
                 } else if (isFuncFParam(array2Item)) {
                     addr = funcFArrayParamId2offset.find(array2Item->arrayId)->second;
-                    addiu(Reg::$t9, Reg::$t9, addr);  // t9:偏移, addr:基地址
-                    sw(reg, addr, Reg::$sp);
+                    lw(Reg::$t8, addr, Reg::$sp);  // t8: 数组实际的首地址
+                    addu(Reg::$t9, Reg::$t9, Reg::$t8);  // t9:偏移, t8: 首地址
+                    sw(reg, 0, Reg::$t9);
                 } else {
                     if (inSelfDefinedFunc) {
                         if (array2Item->isTemp) {
