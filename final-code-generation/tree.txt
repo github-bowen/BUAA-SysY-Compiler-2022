@@ -1,0 +1,75 @@
+.
+├── CMakeLists.txt
+├── _debug.h
+├── ErrorHandler.cpp
+├── ErrorHandler.h
+├── error.txt
+├── exceptions
+│   ├── FileIOError.h
+│   └── ParseEndError.h
+├── exp6-code-generation2.zip
+├── git.sh
+├── ic_output.txt
+├── ICTranslator.cpp
+├── ICTranslator.h
+├── item
+│   ├── ErrorType.h
+│   ├── GrammarItem.h
+│   ├── ic
+│   │   ├── ICEntry.cpp
+│   │   ├── ICEntry.h
+│   │   ├── ICEntryType.h
+│   │   ├── ICItemArray.cpp
+│   │   ├── ICItemArray.h
+│   │   ├── ICItem.cpp
+│   │   ├── ICItemFunc.cpp
+│   │   ├── ICItemFunc.h
+│   │   ├── ICItem.h
+│   │   ├── ICItemImm.h
+│   │   ├── ICItemLabel.h
+│   │   ├── ICItemString.h
+│   │   ├── ICItemType.h
+│   │   ├── ICItemVar.cpp
+│   │   └── ICItemVar.h
+│   ├── reg.h
+│   ├── ReservedWord.h
+│   ├── Symbol.h
+│   ├── symbolTable
+│   │   ├── ConstValue.h
+│   │   ├── ReferencedEntry.h
+│   │   ├── SymbolTable.cpp
+│   │   ├── SymbolTableEntry.cpp
+│   │   ├── SymbolTableEntry.h
+│   │   ├── SymbolTableEntryType.h
+│   │   └── SymbolTable.h
+│   ├── Token.h
+│   ├── variable
+│   │   ├── Array1Const.h
+│   │   ├── Array1.h
+│   │   ├── Array2Const.h
+│   │   ├── Array2.h
+│   │   ├── FuncParam.h
+│   │   ├── FunctionOfInt.h
+│   │   ├── FunctionOfVoid.h
+│   │   ├── VarConst.h
+│   │   └── Var.h
+│   ├── WhileBlock.cpp
+│   └── WhileBlock.h
+├── Lexer.cpp
+├── Lexer.h
+├── main.cpp
+├── mips.asm
+├── MipsTranslator.cpp
+├── MipsTranslator.h
+├── mips.txt
+├── output.txt
+├── Parser.cpp
+├── Parser.h
+├── testfile.txt
+├── tree
+│   ├── ErrorNode.h
+│   ├── Node.cpp
+│   └── Node.h
+└── tree.txt
+
+6 directories, 66 files
