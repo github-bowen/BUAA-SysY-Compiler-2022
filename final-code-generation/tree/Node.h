@@ -15,7 +15,7 @@ protected:
     Node *parent;
     int depth;
     GrammarItem grammarItem;  // for non-leaf nodes
-    Token *token;  // for leaf nodes
+    Token *token{nullptr};  // for leaf nodes
 
 public:
     ~Node();

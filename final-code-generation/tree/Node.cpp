@@ -108,6 +108,9 @@ Token *Node::getToken() {
 }
 
 bool Node::is(Symbol symbol) const {
+    if (this->token == nullptr) {
+        return false;
+    }
     return symbol == this->token->symbol;
 }
 

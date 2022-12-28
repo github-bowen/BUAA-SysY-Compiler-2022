@@ -164,6 +164,7 @@ void ErrorHandler::check_MainFuncDef(Node *node) {
 
 // VarDef → Ident { '[' ConstExp ']' }  FIXME: b => ErrorType::IdentRedefined
 // VarDef → Ident { '[' ConstExp ']' } '=' InitVal  FIXME: k => ErrorType::MissingRBRACK ]
+// VarDef → Ident '=' 'getint' '(' ')'
 void ErrorHandler::check_VarDef(Node *node) {
     Node *ident = node->getFirstChild();
     bool hasError = false;
@@ -172,6 +173,19 @@ void ErrorHandler::check_VarDef(Node *node) {
         errorLog.insert({ident->getToken()->lineNumber,
                          errorType2string.find(ErrorType::IdentRedefined)->second});
     } else {
+        if (node->getChildrenNum() > 2 &&
+            node->getChildAt(1)->is(Symbol::ASSIGN) &&
+            node->getChildAt(2)->is(Symbol::GETINTTK)) {
+            ICItem *initItem = new ICItemVar(IS_GLOBAL);
+            icTranslator->translate_getint(initItem);
+
+            auto *var = new Var();
+            auto *varEntry = new SymbolTableEntry(ident, var, ident->getToken()->lineNumber, false);
+            currentTable->addEntry(*varEntry->getName(), varEntry);
+            icTranslator->translate_VarDef(initItem, IS_GLOBAL, varEntry, true, currentTable);
+            return;
+        }
+
         int i = 1, length = node->getChildrenNum();
         std::vector<int> arrayDimensions;  // size() = 0 || 1 || 2
         while (i < length - 2 && node->getChildAt(i)->is(Symbol::LBRACK)) {
@@ -461,7 +475,7 @@ ConstValue *ErrorHandler::check_ConstInitVal(Node *node, int d) {
     }
 }
 
-// MulExp → UnaryExp | MulExp ('*' | '/' | '%') UnaryExp
+// MulExp → UnaryExp | MulExp ('*' | '/' | '%' | 'bitand') UnaryExp
 SymbolTableEntry *ErrorHandler::check_MulExp(Node *node, bool fromConstExp,
                                              int *constExpValue, ICItem *icItem) {
     SymbolTableEntry *entry1 = nullptr, *entry2 = nullptr;
@@ -479,6 +493,8 @@ SymbolTableEntry *ErrorHandler::check_MulExp(Node *node, bool fromConstExp,
             *constExpValue = value1 * value2;
         } else if (node->getChildAt(1)->is(Symbol::DIV)) {
             *constExpValue = value1 / value2;
+        } else if (node->getChildAt(1)->is(Symbol::BITANDTK)) {
+            *constExpValue = value1 & value2;
         } else {
             *constExpValue = value1 % value2;
         }

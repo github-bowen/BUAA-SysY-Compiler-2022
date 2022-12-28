@@ -18,6 +18,8 @@ enum class Symbol {  // 类别码：包括包括保留字码
     RETURNTK, // return
     VOIDTK, // void
 
+    BITANDTK,
+
     /* 其他 */
     IDENFR, // Ident
     INTCON, // IntConst
@@ -88,7 +90,9 @@ const std::map<Symbol, std::string> symbol2outputString = {  // 用于输出
         {Symbol::LBRACK,     "LBRACK"},
         {Symbol::RBRACK,     "RBRACK"},
         {Symbol::LBRACE,     "LBRACE"},
-        {Symbol::RBRACE,     "RBRACE"}
+        {Symbol::RBRACE,     "RBRACE"},
+
+        {Symbol::BITANDTK,   "BITANDTK"}
 };
 
 #endif //SYMBOL_H

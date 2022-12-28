@@ -26,22 +26,24 @@ class ICTranslator {
     ~ICTranslator();
 
     const std::map<Symbol, ICEntryType> _symbol2binaryOp = {
-            {Symbol::PLUS,   ICEntryType::Add},
-            {Symbol::ASSIGN, ICEntryType::Assign},
-            {Symbol::MINU,   ICEntryType::Sub},
-            {Symbol::MULT,   ICEntryType::Mul},
-            {Symbol::DIV,    ICEntryType::Div},
-            {Symbol::MOD,    ICEntryType::Mod},
+            {Symbol::PLUS,     ICEntryType::Add},
+            {Symbol::ASSIGN,   ICEntryType::Assign},
+            {Symbol::MINU,     ICEntryType::Sub},
+            {Symbol::MULT,     ICEntryType::Mul},
+            {Symbol::DIV,      ICEntryType::Div},
+            {Symbol::MOD,      ICEntryType::Mod},
+
+            {Symbol::BITANDTK, ICEntryType::Bitand},
 
             // 代码生成作业2
-            {Symbol::OR,     ICEntryType::Or},
-            {Symbol::AND,    ICEntryType::And},
-            {Symbol::EQL,    ICEntryType::Equal},
-            {Symbol::NEQ,    ICEntryType::NotEqual},
-            {Symbol::LEQ,    ICEntryType::LessEqual},
-            {Symbol::LSS,    ICEntryType::LessThan},
-            {Symbol::GRE,    ICEntryType::GreaterThan},
-            {Symbol::GEQ,    ICEntryType::GreaterEqual}
+            {Symbol::OR,       ICEntryType::Or},
+            {Symbol::AND,      ICEntryType::And},
+            {Symbol::EQL,      ICEntryType::Equal},
+            {Symbol::NEQ,      ICEntryType::NotEqual},
+            {Symbol::LEQ,      ICEntryType::LessEqual},
+            {Symbol::LSS,      ICEntryType::LessThan},
+            {Symbol::GRE,      ICEntryType::GreaterThan},
+            {Symbol::GEQ,      ICEntryType::GreaterEqual}
 
     };
 

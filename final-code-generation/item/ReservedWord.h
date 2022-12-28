@@ -16,7 +16,9 @@ enum class ReservedWord {  // 保留字码
     GETINTTK, // getint
     PRINTFTK, // printf
     RETURNTK, // return
-    VOIDTK // void
+    VOIDTK, // void
+
+    BITANDTK
 };
 
 const std::map<std::string, ReservedWord> string2reservedWord = {
@@ -31,7 +33,9 @@ const std::map<std::string, ReservedWord> string2reservedWord = {
         {"getint",   ReservedWord::GETINTTK},
         {"printf",   ReservedWord::PRINTFTK},
         {"return",   ReservedWord::RETURNTK},
-        {"void",     ReservedWord::VOIDTK}
+        {"void",     ReservedWord::VOIDTK},
+
+        {"bitand",   ReservedWord::BITANDTK}
 };
 
 const std::map<ReservedWord, Symbol> reservedWord2symbol = {
@@ -46,7 +50,9 @@ const std::map<ReservedWord, Symbol> reservedWord2symbol = {
         {ReservedWord::PRINTFTK,   Symbol::PRINTFTK},
         {ReservedWord::RETURNTK,   Symbol::RETURNTK},
         {ReservedWord::VOIDTK,     Symbol::VOIDTK},
-        {ReservedWord::BREAKTK,    Symbol::BREAKTK}
+        {ReservedWord::BREAKTK,    Symbol::BREAKTK},
+
+        {ReservedWord::BITANDTK,   Symbol::BITANDTK},
 };
 
 #endif //RESERVED_WORD_H

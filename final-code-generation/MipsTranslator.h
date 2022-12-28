@@ -98,6 +98,8 @@ public:
 
     void addu(Reg rd, Reg rs, Reg rt);
 
+    void bitAnd(Reg rd, Reg rs, Reg rt);
+
     void subu(Reg rd, Reg rs, Reg rt);
 
     void mul(Reg rd, Reg rs, Reg rt);

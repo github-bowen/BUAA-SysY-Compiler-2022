@@ -40,7 +40,9 @@ enum class ICEntryType {
     Beqz,
     Bnez,
     InsertLabel,
-    JumpLabel
+    JumpLabel,
+
+    Bitand
 
 };
 

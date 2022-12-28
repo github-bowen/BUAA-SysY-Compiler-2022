@@ -300,7 +300,10 @@ Node *Parser::parse_ConstInitVal(int depth) {
     return constInitVal;
 }
 
-/* VarDef → Ident { '[' ConstExp ']' }  |  Ident { '[' ConstExp ']' } '=' InitVal */
+/* VarDef → Ident { '[' ConstExp ']' }
+ * |  Ident { '[' ConstExp ']' } '=' InitVal
+ * |  Ident '=' 'getint' '(' ')'
+ * */
 // FIXME: k => ErrorType::MissingRBRACK
 Node *Parser::parse_VarDef(int depth) {
     Node *varDef = new Node(GrammarItem::VarDef, depth);
@@ -309,6 +312,25 @@ Node *Parser::parse_VarDef(int depth) {
     child = parse_Ident(depth + 1);
     child->setParent(varDef);
     varDef->addChild(child);
+    if (this->curToken->symbol == Symbol::ASSIGN &&
+        this->tokens[tokenPos + 1]->symbol == Symbol::GETINTTK) {
+        // =
+        varDef->addChild(new Node(this->curToken, varDef, depth + 1));
+        this->nextItem();
+        // getint
+        assert(this->curToken->symbol == Symbol::GETINTTK);
+        varDef->addChild(new Node(this->curToken, varDef, depth + 1));
+        this->nextItem();
+        // '('
+        assert(this->curToken->symbol == Symbol::LPARENT);
+        varDef->addChild(new Node(this->curToken, varDef, depth + 1));
+        this->nextItem();
+        // ')'
+        varDef->addChild(new Node(this->curToken, varDef, depth + 1));
+        this->nextItem();
+        return varDef;
+    }
+
     // { '[' ConstExp ']' }
     while (this->curToken->symbol == Symbol::LBRACK) {
         varDef->addChild(new Node(this->curToken, varDef, depth + 1));
@@ -670,7 +692,8 @@ Node *Parser::parse_Stmt(int depth) {
             child = this->parse_Exp(depth + 1);
             child->setParent(stmt);
             stmt->addChild(child);
-        } else {  // LVal '=' 'getint''('')'';'
+        } else {
+            // LVal '=' 'getint''('')'';'
             stmt->addChild(new Node(this->curToken, stmt, depth + 1));
             this->nextItem();
             // '('
@@ -885,8 +908,8 @@ Node *Parser::parse_FuncRParams(int depth) {
     return exp;
 }
 
-/* MulExp → UnaryExp | MulExp ('*' | '/' | '%') UnaryExp  FIXME: 左递归 */
-/* 改写后： MulExp -> UnaryExp {('*' | '/' | '%') UnaryExp} */
+/* MulExp → UnaryExp | MulExp ('*' | '/' | '%' | 'bitand') UnaryExp  FIXME: 左递归 */
+/* 改写后： MulExp -> UnaryExp {('*' | '/' | '%' | 'bitand') UnaryExp} */
 Node *Parser::parse_MulExp(int depth) {
     Node *current = new Node(GrammarItem::MulExp, depth);
     Node *child = this->parse_UnaryExp(depth + 1);
@@ -894,13 +917,14 @@ Node *Parser::parse_MulExp(int depth) {
     child->setParent(current);
     while (this->curToken->symbol == Symbol::MULT
            || this->curToken->symbol == Symbol::DIV
-           || this->curToken->symbol == Symbol::MOD) {
+           || this->curToken->symbol == Symbol::MOD
+           || this->curToken->symbol == Symbol::BITANDTK) {
         // 在发现右侧还有成分时，先将左侧向上打包一层, FIXME: 这里depth有误
         Node *temp = new Node(GrammarItem::MulExp, depth);
         temp->addChild(current);
         current->setParent(temp);
         current = temp;
-        // ('*' | '/' | '%')
+        // ('*' | '/' | '%' | 'bitand')
         current->addChild(new Node(this->curToken, current, depth + 1));
         this->nextItem();
         // UnaryExp

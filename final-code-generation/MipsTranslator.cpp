@@ -208,6 +208,25 @@ void MipsTranslator::translate() {
                 }
                 break;
             }
+            case ICEntryType::Bitand: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value & r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    bitAnd(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    bitAnd(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
+                break;
+            }
             case ICEntryType::Sub: {
                 auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
                 if (r1->isConst && r2->isConst) {
@@ -681,6 +700,25 @@ void MipsTranslator::translate_FuncDef(ICItemFunc *func) {
                     lw(Reg::$t0, r1);
                     lw(Reg::$t1, r2);
                     addu(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                }
+                break;
+            }
+            case ICEntryType::Bitand: {
+                auto *dst = (ICItemVar *) op1, *r1 = (ICItemVar *) op2, *r2 = (ICItemVar *) op3;
+                if (r1->isConst && r2->isConst) {
+                    const int right = r1->value & r2->value;
+                    li(Reg::$t0, right);
+                    sw(Reg::$t0, dst);
+                } else if (r1->isConst) {
+                    li(Reg::$t0, r1->value);
+                    lw(Reg::$t1, r2);
+                    bitAnd(Reg::$t2, Reg::$t0, Reg::$t1);
+                    sw(Reg::$t2, dst);
+                } else {
+                    lw(Reg::$t0, r1);
+                    lw(Reg::$t1, r2);
+                    bitAnd(Reg::$t2, Reg::$t0, Reg::$t1);
                     sw(Reg::$t2, dst);
                 }
                 break;
@@ -1692,6 +1730,12 @@ void MipsTranslator::printInt(ICItemVar *var) {
 
 void MipsTranslator::addu(Reg rd, Reg rs, Reg rt) {
     mipsOutput << "addu " + reg2s.find(rd)->second <<
+               ", " << reg2s.find(rs)->second <<
+               ", " << reg2s.find(rt)->second << "\n";
+}
+
+void MipsTranslator::bitAnd(Reg rd, Reg rs, Reg rt) {
+    mipsOutput << "and " + reg2s.find(rd)->second <<
                ", " << reg2s.find(rs)->second <<
                ", " << reg2s.find(rt)->second << "\n";
 }
