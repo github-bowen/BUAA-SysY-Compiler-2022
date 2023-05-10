@@ -35,6 +35,8 @@ static void grammarItemOutput(Node *cur) {
 }
 
 int main() {
+    std::string s = "ss";
+    std::map<int, int> a;
     if (!input.is_open())
         throw FileIOError("ERROR IN OPENING FILE 'testfile.txt'!");
     if (!normalOutput.is_open())
