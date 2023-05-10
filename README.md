@@ -10,7 +10,7 @@ This project is a compiler for the BUAA compilation course major assignment - Sy
 
 ## Usage
 
-Windows users can download the `exe` format file from the GitHub Release and run it directly as follows:
+Windows system users can download `compiler.zip` compressed file in [GitHub Release](https://github.com/NormalLLer/BUAA-SysY-Compiler-2022/releases/tag/v1.0), which contains the Execute the file `compiler.exe` and the sample SysY language source code `testfile.txt`, run `compiler.exe` directly in `cmd`:
 
 ```
 compiler.exe
@@ -78,7 +78,7 @@ int main() {
 
 The MIPS code output after running `compiler.exe` is as follows:
 
-```mips
+```assembly
 .data 0x10010000
 temp:  .space  160000
 

@@ -7,7 +7,7 @@
 
 ## 使用
 
-Windows 系统用户可在 GitHub Release 中下载 exe 格式文件直接运行：
+Windows 系统用户可在 [GitHub Release](https://github.com/NormalLLer/BUAA-SysY-Compiler-2022/releases/tag/v1.0) 中下载 `compiler.zip` 压缩包文件，里面含有可执行文件 `compiler.exe` 和样例 SysY 语言源代码 `testfile.txt` ，在 `cmd` 中直接运行 `compiler.exe`：
 
 ```
 compiler.exe
@@ -75,7 +75,7 @@ int main() {
 
 运行 `compiler.exe` 后输出的 MIPS 代码如下：
 
-```mips
+```assembly
 .data 0x10010000
 temp:  .space  160000
 
