@@ -8,6 +8,8 @@
 
 This project is a compiler for the BUAA compilation course major assignment - SysY language (a subset of C) based on the MIPS architecture. The compiler converts input SysY language code into MIPS language assembly code that can run on MARS.
 
+[Design Document](./docs/System_Design.md)
+
 ## Usage
 
 Windows system users can download `compiler.zip` compressed file in [GitHub Release](https://github.com/NormalLLer/BUAA-SysY-Compiler-2022/releases/tag/v1.0), which contains the Execute the file `compiler.exe` and the sample SysY language source code `testfile.txt`, run `compiler.exe` directly in `cmd`:

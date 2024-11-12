@@ -2,9 +2,7 @@
 
 ## 一. 参考编译器介绍
 
-我参考的编译器是教材第 17 章和编译实验网站附件中 PL/0简单编译系统的结构。其总体结构如下图所示：
-
-<img src="C:\Users\wanqi\AppData\Roaming\Typora\typora-user-images\image-20221225201924765.png" alt="image-20221225201924765" style="zoom:45%;" />
+我参考的编译器是教材第 17 章和编译实验网站附件中 PL/0简单编译系统的结构。
 
 PL/0为编译——解释执行程序。编译部分生成的目标代码为PCODE指令。由于我前期没有决定好目标代码，选择参考编译器时主要参考的是前端（词法分析、语法分析、语义分析生成中间代码）的架构。PL/0采用一遍扫描，以语法分析为核心，在语法分析过程中调用词法分析程序取单词，同时也进行语义分析，最终生成目标代码。同时，它进行语义检查，发现错误后就转出错处理程序。
 
@@ -393,25 +391,25 @@ if (this->curToken->symbol == Symbol::RPARENT) {
   - `SymbolTableEntryType type`：符号表项的类型，分为变量、常量、一维数组、一维数组常量、二维数组......
 
   ```cpp
-  	Node *node;
-      const bool isFuncFParam;  // 函数的形参
-      unsigned int defLineNum;
+  Node *node;
+  const bool isFuncFParam;  // 函数的形参
+  unsigned int defLineNum;
   
-      Var *var{nullptr};
-      VarConst *varConst{nullptr};
+  Var *var{nullptr};
+  VarConst *varConst{nullptr};
   
-      Array1 *array1{nullptr};
-      Array1Const *array1Const{nullptr};
-      Array2 *array2{nullptr};
-      Array2Const *array2Const{nullptr};
+  Array1 *array1{nullptr};
+  Array1Const *array1Const{nullptr};
+  Array2 *array2{nullptr};
+  Array2Const *array2Const{nullptr};
   
-      FunctionOfInt *functionOfInt{nullptr};
-      FunctionOfVoid *functionOfVoid{nullptr};
+  FunctionOfInt *functionOfInt{nullptr};
+  FunctionOfVoid *functionOfVoid{nullptr};
   
-      // 引用表项
-      ReferencedEntry *tempEntry{nullptr};  // 该类型不应该保存到符号表 !!!
-      // 其对应的真正定义的表项
-      SymbolTableEntry *definedEntry{nullptr};
+  // 引用表项
+  ReferencedEntry *tempEntry{nullptr};  // 该类型不应该保存到符号表 !!!
+  // 其对应的真正定义的表项
+  SymbolTableEntry *definedEntry{nullptr};
   ```
 
   为了方便，这里将所有数据类型对应的类都加到了符号表项类的属性中（以指针的形式）。其中，这里的`ReferencedEntry *tempEntry`用于表示引用变量，而不是实际被定义的变量，这个时候其`SymbolTableEntry *definedEntry`必须要赋值，保证能通过该表项找到实际定义点。
@@ -485,37 +483,37 @@ public:
   下面是根据id找到不同数据类型的变量或数组在内存中的位置或首地址：
 
   ```cpp
-  	/**
-       * main函数专用：存局部变量
-       */
-      std::map<int, int> localVarId2mem;  // id 为负
+  /**
+   * main函数专用：存局部变量
+   */
+  std::map<int, int> localVarId2mem;  // id 为负
   
-      std::map<int, int> tempVarId2mem;  // id 为正
+  std::map<int, int> tempVarId2mem;  // id 为正
   
-      std::map<int, int> localArrayId2mem;  // id 为正
+  std::map<int, int> localArrayId2mem;  // id 为正
   
-      std::map<int, int> tempArrayId2mem;  // id 为负
+  std::map<int, int> tempArrayId2mem;  // id 为负
   
-      /**
-       * 自定义函数专用：存局部变量, offset 相对于当前函数栈的 $sp
-       */
-      std::map<int, int> localVarId2offset;  // id 为负
+  /**
+   * 自定义函数专用：存局部变量, offset 相对于当前函数栈的 $sp
+   */
+  std::map<int, int> localVarId2offset;  // id 为负
   
-      std::map<int, int> tempVarId2offset;  // id 为正
+  std::map<int, int> tempVarId2offset;  // id 为正
   
-      std::map<int, int> localArrayId2offset;  // id 为正
+  std::map<int, int> localArrayId2offset;  // id 为正
   
-      std::map<int, int> tempArrayId2offset;  // id 为负
+  std::map<int, int> tempArrayId2offset;  // id 为负
   
-      //---------------------
+  //---------------------
   
-      std::map<Reg, bool> regUsage;
+  std::map<Reg, bool> regUsage;
   
-      std::map<Reg, int> reg2id;
+  std::map<Reg, int> reg2id;
   
-      std::map<int, int> funcFVarParamId2offset;
+  std::map<int, int> funcFVarParamId2offset;
   
-      std::map<int, int> funcFArrayParamId2offset;
+  std::map<int, int> funcFArrayParamId2offset;
   ```
 
 生成过程：
@@ -526,43 +524,43 @@ public:
 
 ```cpp
 // 全局变量、常量
-    while (mainStream->at(i)->entryType != ICEntryType::MainFuncStart) {
-        ICEntry *defEntry = mainStream->at(i);
-	//        assert(defEntry->isGlobalVarOrConstDef());
-        translate_GlobalVarOrArrayDef(defEntry);
-        i++;
-    }
+while (mainStream->at(i)->entryType != ICEntryType::MainFuncStart) {
+    ICEntry *defEntry = mainStream->at(i);
+//        assert(defEntry->isGlobalVarOrConstDef());
+    translate_GlobalVarOrArrayDef(defEntry);
+    i++;
+}
 
 // 字符串片段(纯字符串部分)定义
-    mipsOutput << "\n# string tokens: \n";
-    for (const auto &item: *id2allPureString) {
-        const int id = item.first;
-        const std::string *str = item.second;
-        mipsOutput << strId2label(id) << ":  .asciiz   \"" << *str << "\"\n";
-    }
+mipsOutput << "\n# string tokens: \n";
+for (const auto &item: *id2allPureString) {
+    const int id = item.first;
+    const std::string *str = item.second;
+    mipsOutput << strId2label(id) << ":  .asciiz   \"" << *str << "\"\n";
+}
 ```
 
 紧接着翻译主函数：
 
 ```cpp
 // 主函数部分
-    assert(mainStream->at(i)->entryType == ICEntryType::MainFuncStart);
-    i++;
-    mipsOutput << "\n\n.text 0x00400000\n\n# main function\n";
-    while (i < mainEntryNum) {
+assert(mainStream->at(i)->entryType == ICEntryType::MainFuncStart);
+i++;
+mipsOutput << "\n\n.text 0x00400000\n\n# main function\n";
+while (i < mainEntryNum) {
 #ifdef MIPS_DEBUG
-        mipsOutput << std::flush;
+    mipsOutput << std::flush;
 #endif
-        ICEntry *entry = mainStream->at(i);
-        ICItem *op1 = entry->operator1, *op2 = entry->operator2, *op3 = entry->operator3;
-        const int opNum = entry->opNum;
-        switch (entry->entryType) {
-            case ICEntryType::VarDefine: {  // 局部变量
-                // ......
-            }
+    ICEntry *entry = mainStream->at(i);
+    ICItem *op1 = entry->operator1, *op2 = entry->operator2, *op3 = entry->operator3;
+    const int opNum = entry->opNum;
+    switch (entry->entryType) {
+        case ICEntryType::VarDefine: {  // 局部变量
             // ......
         }
+        // ......
     }
+}
 ```
 
 ### 编码完成之后的修改
@@ -585,40 +583,40 @@ public:
 
 ```cpp
 // 非 LVal
-    if (var->isGlobal) {
-        la(reg, var->toString());
-        lw(reg, 0, reg);
-        return;
+if (var->isGlobal) {
+    la(reg, var->toString());
+    lw(reg, 0, reg);
+    return;
+}
+if (var->isConst) {
+    li(reg, var->value);
+    return;
+}
+if (isFuncFParam(var)) {
+    addr = funcFVarParamId2offset.find(var->varId)->second;
+    if (whenPushingParamsRecursively) {
+        addr += 30000;
     }
-    if (var->isConst) {
-        li(reg, var->value);
-        return;
-    }
-    if (isFuncFParam(var)) {
-        addr = funcFVarParamId2offset.find(var->varId)->second;
-        if (whenPushingParamsRecursively) {
-            addr += 30000;
-        }
-        lw(reg, addr, Reg::$sp);
-        return;
-    }
-    if (inSelfDefinedFunc) {
-        if (var->isTemp) {
-            addr = tempVarId2offset.find(var->tempVarId)->second;
-        } else {
-            addr = localVarId2offset.find(var->varId)->second;
-        }
-        if (whenPushingParamsRecursively) {
-            addr += 30000;
-        }
-        lw(reg, addr, Reg::$sp);
+    lw(reg, addr, Reg::$sp);
+    return;
+}
+if (inSelfDefinedFunc) {
+    if (var->isTemp) {
+        addr = tempVarId2offset.find(var->tempVarId)->second;
     } else {
-        if (var->isTemp) {
-            addr = tempVarId2mem.find(var->tempVarId)->second;
-        } else {
-            addr = localVarId2mem.find(var->varId)->second;
-        }
-        lw(reg, addr, Reg::$zero);
+        addr = localVarId2offset.find(var->varId)->second;
     }
+    if (whenPushingParamsRecursively) {
+        addr += 30000;
+    }
+    lw(reg, addr, Reg::$sp);
+} else {
+    if (var->isTemp) {
+        addr = tempVarId2mem.find(var->tempVarId)->second;
+    } else {
+        addr = localVarId2mem.find(var->varId)->second;
+    }
+    lw(reg, addr, Reg::$zero);
+}
 ```
 

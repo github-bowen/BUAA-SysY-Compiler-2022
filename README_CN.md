@@ -5,6 +5,8 @@
 
 本项目为BUAA编译课程大作业——基于 MIPS 体系结构的 SysY 语言（C 语言的子集）的编译器。该编译器能将输入的 SysY 语言代码转化为能在 MARS 上运行的 MIPS 语言汇编代码。
 
+[设计文档](./docs/System_Design_CN.md)
+
 ## 使用
 
 Windows 系统用户可在 [GitHub Release](https://github.com/NormalLLer/BUAA-SysY-Compiler-2022/releases/tag/v1.0) 中下载 `compiler.zip` 压缩包文件，里面含有可执行文件 `compiler.exe` 和样例 SysY 语言源代码 `testfile.txt` ，在 `cmd` 中直接运行 `compiler.exe`：

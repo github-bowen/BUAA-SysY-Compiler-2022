@@ -20,9 +20,9 @@ CMakeLists.txt
 /*/CMakeLists.txt
 /*/*/CMakeLists.txt
 
-# *.sh
-# /*/*.sh
-# /*/*/*.sh
+*.sh
+/*/*.sh
+/*/*/*.sh
 
 *.zip
 *.rar
