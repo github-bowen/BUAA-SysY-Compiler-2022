@@ -1,6 +1,6 @@
 # BUAA-SysY-Compiler-2022
 
-[中文版](./README_zh.md)
+[中文版](./README_CN.md)
 
 > Note: BUAA course team strictly check the code, this repository code is for reference only, please don't copy it!
 
